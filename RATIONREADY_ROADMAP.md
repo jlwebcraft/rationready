@@ -280,7 +280,7 @@ Dates are in IST. This is a deadline-led plan. Required MVP work takes priority 
 
 - [ ] `P0-01` Create the GitHub repository named `rationready` (or confirm the agreed repository name) and add all team members.
 - [x] `P0-02` Add this exact roadmap file to the repository root as `RATIONREADY_ROADMAP.md`.
-- [ ] `P0-03` Confirm the Team Leader and ensure only the Team Leader will submit the official entry.
+- [x] `P0-03` Confirm the Team Leader and ensure only the Team Leader will submit the official entry.
 - [ ] `P0-04` Confirm participant eligibility and each participant's AWS Builder Center profile/student verification status as required by the event instructions.
 - [ ] `P0-05` Confirm the AWS account plan, available credits, and access to the selected services.
 - [ ] `P0-06` Create an AWS budget alert and billing notifications before provisioning resources.

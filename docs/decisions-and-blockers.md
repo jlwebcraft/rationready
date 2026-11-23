@@ -40,6 +40,12 @@ The following architectural and technical decisions are defined and locked per `
   - No GPS tracking or map services.
   - No AI/ML prediction or chatbots.
   - No direct government ePOS integration.
+- **Team Leadership & Submission Ownership (`P0-03`):**
+  - **Team Leader:** Project owner.
+  - **GitHub Identity:** `@jlwebcraft`.
+  - **Repository:** `https://github.com/jlwebcraft/rationready`.
+  - **Responsibility:** Sole authorised person for submitting the official hackathon entry through the Techfest portal.
+  - **Scope of Responsibility:** Includes coordinating all final deliverables (idea brief, build summary, AWS architecture, demo video, project links) and ensuring the official submission is completed before the deadline.
 
 ---
 
@@ -49,17 +55,15 @@ The following decisions and confirmations require human / team intervention:
 
 1. **Team Member Collaborator Invitations (`P0-01`):**
    - Confirm all team members have accepted invitations to the public GitHub repository (`https://github.com/jlwebcraft/rationready`).
-2. **Designation of Team Leader (`P0-03`):**
-   - Confirm the designated Team Leader who holds sole responsibility for submitting deliverables through the official Techfest portal.
-3. **Participant Eligibility & Builder Center Verification (`P0-04`):**
+2. **Participant Eligibility & Builder Center Verification (`P0-04`):**
    - Confirm student eligibility and verification status on AWS Builder Center profiles for all participating team members.
-4. **AWS Account, Credits & Service Access Verification (`P0-05`):**
+3. **AWS Account, Credits & Service Access Verification (`P0-05`):**
    - Confirm via the AWS Console that the account plan, available credit balance, required service access (Lambda, API Gateway, DynamoDB, Cognito, CloudWatch), and region selection (`ap-south-1`) are verified.
-5. **AWS Budget & Billing Notifications Verification (`P0-06`):**
+4. **AWS Budget & Billing Notifications Verification (`P0-06`):**
    - Confirm via the AWS Console that an AWS Budget exists, a threshold is configured, and email billing notifications are active.
-6. **Geographic Pilot Locality Validation (`P0-07` Follow-Up):**
+5. **Geographic Pilot Locality Validation (`P0-07` Follow-Up):**
    - The initial prototype dataset (5 synthetic shops in `Demo Locality A`, `isDemoData: true`) has been formally approved by the project owner. On-the-ground selection and validation of real Fair Price Shops remains a future team activity.
-7. **Full Team Agreement on Product Specifications (`P0-08`):**
+6. **Full Team Agreement on Product Specifications (`P0-08`):**
    - Formal sign-off and consensus from all team members on the fixed user flows, roles, report fields, and freshness/aggregation rules defined in Sections 1 and 2 of the roadmap.
 
 ---
@@ -146,7 +150,7 @@ These tasks must be verified directly through the AWS Console by the account own
 |---|---|---|---|---|
 | `BLK-01` | AWS Console verification of account plan, credits, and services pending (`P0-05`) | Cannot verify AWS service accessibility or credit coverage | Account owner must check AWS Console (Account Plan, Credits, Services, `ap-south-1`) and confirm completion | Open |
 | `BLK-02` | AWS Budget and billing email notifications unverified (`P0-06`) | Lacks cost protection before resource provisioning | Account owner must create an AWS Budget with email alert in AWS Billing Console and confirm completion | Open |
-| `BLK-03` | Team Leader designation and participant Builder Center verification pending (`P0-03`, `P0-04`) | Affects official hackathon registration and submission eligibility | Team members must complete AWS Builder Center profile verifications and confirm Team Leader | Open |
+| `BLK-03` | Participant eligibility and AWS Builder Center verification pending (`P0-04`) | Affects official hackathon registration and submission eligibility | Team members must complete AWS Builder Center profile verifications. (Team Leader designation resolved: Project owner @jlwebcraft confirmed as sole submitter per `P0-03`) | Pending (Participant Verification) |
 | `BLK-04` | Full team agreement on product flows and rules pending (`P0-08`) | Prerequisite for Phase 0 completion | All team members must review and agree to Sections 1 and 2 of the roadmap | Open |
 | `BLK-05` | Team collaborator invitations pending confirmation (`P0-01`) | Team members need GitHub access for review and contributions | Repository owner must invite all team members via GitHub and confirm acceptance | Pending Confirmation |
 | `BLK-06` | Pilot dataset for initial prototype (`P0-07`) | Initial shop directory required seed data | Initial prototype synthetic dataset (5 shops in `Demo Locality A`, `isDemoData: true`) is approved. Actual geographic pilot validation remains pending as a future activity | Resolved (Synthetic Data Approved) |
