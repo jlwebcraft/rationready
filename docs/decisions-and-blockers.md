@@ -9,7 +9,7 @@
 
 ## 1. Confirmed Decisions
 
-The following architectural and technical decisions are formally locked per `RATIONREADY_ROADMAP.md` Sections 1 and 2:
+The following architectural and technical decisions are defined and locked per `RATIONREADY_ROADMAP.md` Sections 1 and 2:
 
 - **Product Positioning:** RationReady is a community-powered PDS visit assistant providing freshness-aware, crowd-reported waiting time, ePOS status, and commodity availability for Fair Price Shops. It is explicitly not an official government portal, does not issue ration, and does not conduct entitlement checks.
 - **Technology Stack:**
@@ -43,75 +43,90 @@ The following architectural and technical decisions are formally locked per `RAT
 
 ---
 
-## 2. Pending Human Decisions
+## 2. Pending Decisions
 
-The following items require explicit action or decision from the team:
+The following decisions and confirmations require human / team intervention:
 
 1. **Designation of Team Leader (`P0-03`):**
-   - Identify the primary Team Leader holding sole responsibility for submitting deliverables through the official Techfest portal.
+   - Confirm the designated Team Leader who holds sole responsibility for submitting deliverables through the official Techfest portal.
 2. **Participant Eligibility & Builder Center Verification (`P0-04`):**
-   - Each participating student must confirm their AWS Builder Center profile and eligibility verification per event rules.
-3. **Pilot Locality Selection (`P0-07`):**
-   - Finalise selection of a specific geographic locality and 5–10 verifiable Fair Price Shops, or formally approve seeded fictional records (`Demo Shop 01`–`Demo Shop 05`, `isDemoData: true`) for initial phases.
+   - Confirm student eligibility and verification status on AWS Builder Center profiles for all participating team members.
+3. **AWS Account, Credits & Service Access Verification (`P0-05`):**
+   - Confirm via the AWS Console that the account plan, available credit balance, required service access (Lambda, API Gateway, DynamoDB, Cognito, CloudWatch), and region selection (`ap-south-1`) are verified.
+4. **AWS Budget & Billing Notifications Verification (`P0-06`):**
+   - Confirm via the AWS Console that an AWS Budget exists, a threshold is configured, and email billing notifications are active.
+5. **Pilot Locality & Shop Dataset Selection (`P0-07`):**
+   - Select a specific geographic locality and 5–10 verifiable Fair Price Shops, or approve the adoption of synthetic demo shops (`Demo Shop 01`–`Demo Shop 05`, `isDemoData: true`) for initial development.
+6. **Full Team Agreement on Product Specifications (`P0-08`):**
+   - Formal sign-off and consensus from all team members on the fixed user flows, roles, report fields, and freshness/aggregation rules defined in Sections 1 and 2 of the roadmap.
 
 ---
 
-## 3. Environment Issues
+## 3. Environment Status
 
-| Component | Detected State | Required State | Action Needed |
+| Component | Detected State | Required State | Status / Action Needed |
 |---|---|---|---|
 | Node.js | `v24.11.1` | Node.js 20+ / 22 compatible | Satisfied. |
 | npm | `11.6.2` | npm 9+ | Satisfied. |
 | Git | `2.52.0.windows.1` | Git 2.x | Satisfied. |
-| AWS CLI | Not found in PATH | AWS CLI v2 installed & configured | Install AWS CLI v2 and add to PATH. |
-| AWS SAM CLI | Not found in PATH | SAM CLI installed | Install AWS SAM CLI for infrastructure validation and deployment. |
-| GitHub CLI (`gh`) | Not found in PATH | Optional / Recommended | Install or create repository directly via GitHub web UI. |
+| AWS CLI | Not found in PATH | AWS CLI v2 installed & configured | Tooling requirement: Install AWS CLI v2 locally for local SAM builds and deployments (does not affect AWS Console verification). |
+| AWS SAM CLI | Not found in PATH | SAM CLI installed | Tooling requirement: Install AWS SAM CLI for local template validation and deployment. |
+| GitHub CLI (`gh`) | Not found in PATH | Optional | Optional convenience tool; repository can be created via GitHub web interface. |
 
 ---
 
-## 4. AWS Setup Requirements
+## 4. AWS Requirements
 
-Before any CloudFormation/SAM stack deployment:
+AWS setup is divided into Console verifications (immediate Phase 0 requirements) and local deployment tooling (Phase 1 / Phase 6 requirements):
 
-1. **AWS Account & Service Access (`P0-05`):**
-   - Confirm access to an active AWS account in region `ap-south-1`.
-   - Verify IAM permissions for Lambda, API Gateway, DynamoDB, Cognito, IAM, and CloudWatch.
-   - Confirm active credits / Free Tier coverage.
-2. **AWS Credentials Configuration:**
-   - Run `aws configure` to set `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and default region `ap-south-1`.
-3. **AWS Budget & Billing Alerts (`P0-06`):**
-   - Create an AWS Budget alert with a conservative threshold (e.g., \$5 – \$10 USD) linked to team email/SNS before provisioning infrastructure.
+### 4.1 AWS Console Verifications (`P0-05` & `P0-06`)
+These tasks must be verified directly through the AWS Console by the account owner before provisioning resources:
+- **`P0-05` Account Verification:**
+  - Active AWS account plan.
+  - Available AWS credits or Free Tier status.
+  - Verified access to required AWS services: Lambda, API Gateway HTTP API, DynamoDB, Amazon Cognito, and Amazon CloudWatch.
+  - Active region set to Asia Pacific (Mumbai) `ap-south-1`.
+- **`P0-06` Budget Protection:**
+  - AWS Budget created in AWS Billing Console.
+  - Budget threshold configured (recommended: \$5 – \$10 USD).
+  - Billing alert email notifications configured and active.
 
----
-
-## 5. Pilot Locality Status
-
-- **Status:** Unconfirmed / Pending human input.
-- **Current Assessment:** Real ration shop operational data cannot be invented.
-- **Resolution Strategy:**
-  - Proceed with Phase 0/1 setup using synthetic demo shop records (5 shops in `Demo Locality A`, marked with `isDemoData: true`).
-  - Transition to real pilot data once the team provides verified public shop names, landmarks, and localities.
+### 4.2 Local AWS Tooling & Deployment Setup
+- Install AWS CLI v2 and AWS SAM CLI on the development workstation.
+- Configure local developer profile via `aws configure` targeting `ap-south-1` (needed when building and deploying backend stacks in Phase 6).
 
 ---
 
-## 6. GitHub Repository Status
+## 5. GitHub Status
 
-- **Status:** Local Git repository initialized; remote repository unconfigured.
-- **Local State:** Repository initialized with `main` branch.
-- **Action Required:**
-  1. Create a remote GitHub repository named `rationready`.
+- **Local Git Repository:** Initialized with `main` (deployable) and `develop` (active integration) branches.
+- **Remote Configuration:** No remote origin configured.
+- **Action Required (`P0-01`):**
+  1. Create a remote GitHub repository named `rationready` (or approved team repository name).
   2. Add team collaborators.
-  3. Add the remote: `git remote add origin <repo-url>`.
-  4. Push `main` and `develop` branches.
+  3. Link the remote repository: `git remote add origin <repo-url>`.
+  4. Push initial `main` and `develop` branches once approved.
 
 ---
 
-## 7. Blockers and Resolutions Log
+## 6. Pilot Locality Status
+
+- **Status:** Pending team decision (`P0-07`).
+- **Current Assessment:** Real Fair Price Shop operational data cannot be invented or assumed.
+- **Resolution Strategy:**
+  - Seed initial development and tests with 5–10 clearly marked synthetic demo shop records (e.g., `Demo Shop 01`, `locality: "Demo Locality A"`, `isDemoData: true`).
+  - Replace or augment with verified real shops once the team completes on-the-ground verification in the selected pilot locality.
+
+---
+
+## 7. Blockers and Required Resolutions
 
 | Blocker ID | Description | Impact | Required Resolution | Status |
 |---|---|---|---|---|
-| `BLK-01` | AWS CLI and SAM CLI are not installed or not in PATH | Cannot verify AWS account, credits, or deploy SAM templates | User must install AWS CLI v2 and AWS SAM CLI on the development machine | Open |
-| `BLK-02` | AWS credentials and budget alerts are unconfigured | Cannot proceed to Phase 6 deployment or verify cloud services | User must configure credentials (`aws configure`) and establish AWS Budget alert | Open |
-| `BLK-03` | Team Leader and member Builder Center verifications pending | Required for official hackathon submission eligibility | Team members must complete Builder Center profiles and designate Leader | Open |
-| `BLK-04` | GitHub remote repository not yet created | Team cannot share code, open PRs, or link AWS Amplify Hosting | Team Leader / Owner must create GitHub repository and configure `origin` | Open |
-| `BLK-05` | Pilot locality and shops not yet selected | Cannot populate real shop directory | Adopt synthetic demo shops (`isDemoData: true`) until real locality is confirmed | Mitigated via Demo Data |
+| `BLK-01` | AWS Console verification of account plan, credits, and services pending (`P0-05`) | Cannot verify AWS service accessibility or credit coverage | Account owner must check AWS Console (Account Plan, Credits, Services, `ap-south-1`) and confirm completion | Open |
+| `BLK-02` | AWS Budget and billing email notifications unverified (`P0-06`) | Lacks cost protection before resource provisioning | Account owner must create an AWS Budget with email alert in AWS Billing Console and confirm completion | Open |
+| `BLK-03` | Team Leader designation and participant Builder Center verification pending (`P0-03`, `P0-04`) | Affects official hackathon registration and submission eligibility | Team members must complete AWS Builder Center profile verifications and confirm Team Leader | Open |
+| `BLK-04` | Full team agreement on product flows and rules pending (`P0-08`) | Prerequisite for Phase 0 completion | All team members must review and agree to Sections 1 and 2 of the roadmap | Open |
+| `BLK-05` | Remote GitHub repository not yet created (`P0-01`) | Team cannot push code, review PRs, or configure AWS Amplify | Team Leader / Owner must create GitHub repository and configure `origin` | Open |
+| `BLK-06` | Pilot locality and shop dataset unselected (`P0-07`) | Real shop directory cannot be populated | Team must select locality or formally approve synthetic demo dataset (`isDemoData: true`) | Mitigated via Demo Data |
+| `BLK-07` | AWS CLI v2 and AWS SAM CLI not installed in PATH | Prevents local SAM build/deploy commands during Phase 1/Phase 6 | Install AWS CLI v2 and AWS SAM CLI on the local machine (tooling requirement) | Open |
