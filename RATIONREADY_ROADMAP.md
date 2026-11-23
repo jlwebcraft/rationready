@@ -284,7 +284,7 @@ Dates are in IST. This is a deadline-led plan. Required MVP work takes priority 
 - [ ] `P0-04` Confirm participant eligibility and each participant's AWS Builder Center profile/student verification status as required by the event instructions.
 - [ ] `P0-05` Confirm the AWS account plan, available credits, and access to the selected services.
 - [ ] `P0-06` Create an AWS budget alert and billing notifications before provisioning resources.
-- [ ] `P0-07` Select one pilot locality and prepare a list of 5–10 shops; mark unverified entries as demo data.
+- [x] `P0-07` Select one pilot locality and prepare a list of 5–10 shops; mark unverified entries as demo data.
 - [ ] `P0-08` Agree the fixed user flows, roles, report fields, and freshness/aggregation rules in Sections 1 and 2.
 - [x] `P0-09` Create `docs/decisions-and-blockers.md` and record initial decisions, owners, and blockers.
 

@@ -57,8 +57,8 @@ The following decisions and confirmations require human / team intervention:
    - Confirm via the AWS Console that the account plan, available credit balance, required service access (Lambda, API Gateway, DynamoDB, Cognito, CloudWatch), and region selection (`ap-south-1`) are verified.
 5. **AWS Budget & Billing Notifications Verification (`P0-06`):**
    - Confirm via the AWS Console that an AWS Budget exists, a threshold is configured, and email billing notifications are active.
-6. **Pilot Locality & Shop Dataset Selection (`P0-07`):**
-   - Select a specific geographic locality and 5–10 verifiable Fair Price Shops, or approve the adoption of synthetic demo shops (`Demo Shop 01`–`Demo Shop 05`, `isDemoData: true`) for initial development.
+6. **Geographic Pilot Locality Validation (`P0-07` Follow-Up):**
+   - The initial prototype dataset (5 synthetic shops in `Demo Locality A`, `isDemoData: true`) has been formally approved by the project owner. On-the-ground selection and validation of real Fair Price Shops remains a future team activity.
 7. **Full Team Agreement on Product Specifications (`P0-08`):**
    - Formal sign-off and consensus from all team members on the fixed user flows, roles, report fields, and freshness/aggregation rules defined in Sections 1 and 2 of the roadmap.
 
@@ -116,11 +116,27 @@ These tasks must be verified directly through the AWS Console by the account own
 
 ## 6. Pilot Locality Status
 
-- **Status:** Pending team decision (`P0-07`).
-- **Current Assessment:** Real Fair Price Shop operational data cannot be invented or assumed.
-- **Resolution Strategy:**
-  - Seed initial development and tests with 5–10 clearly marked synthetic demo shop records (e.g., `Demo Shop 01`, `locality: "Demo Locality A"`, `isDemoData: true`).
-  - Replace or augment with verified real shops once the team completes on-the-ground verification in the selected pilot locality.
+- **Approval Status:** Approved by project owner (23 November 2026).
+- **Approved Pilot Dataset:** 5 synthetic demonstration shops.
+- **Demonstration Locality:** `Demo Locality A` (all five demonstration shops belong to this single demonstration locality).
+- **Data Integrity & Safety Guardrails:**
+  - All records must explicitly have `isDemoData: true`.
+  - All records are visibly marked **DEMO DATA** in UI components and documentation.
+  - No synthetic record may be represented as a real ration shop.
+  - No fictional operational information (queue times, ePOS health, or commodity stock) may be represented as verified information.
+  - Fictional demonstration descriptions are used instead of real addresses.
+  - Coordinates, verified opening hours, real stock information, and government registration details are not invented.
+- **Future Pilot Validation:** Actual geographic pilot locality selection and on-the-ground validation remain a planned future activity.
+
+### Approved Initial Demonstration Shops
+
+| Shop ID | Shop Name | Locality | Description / Landmark (Fictional) | Data Status | `isDemoData` |
+|---|---|---|---|---|---|
+| `demo-shop-001` | Demo Shop 01 | Demo Locality A | Fictional Demonstration Facility 01, Sector Alpha | DEMO DATA | `true` |
+| `demo-shop-002` | Demo Shop 02 | Demo Locality A | Fictional Demonstration Facility 02, Sector Beta | DEMO DATA | `true` |
+| `demo-shop-003` | Demo Shop 03 | Demo Locality A | Fictional Demonstration Facility 03, Sector Gamma | DEMO DATA | `true` |
+| `demo-shop-004` | Demo Shop 04 | Demo Locality A | Fictional Demonstration Facility 04, Sector Delta | DEMO DATA | `true` |
+| `demo-shop-005` | Demo Shop 05 | Demo Locality A | Fictional Demonstration Facility 05, Sector Epsilon | DEMO DATA | `true` |
 
 ---
 
@@ -133,5 +149,5 @@ These tasks must be verified directly through the AWS Console by the account own
 | `BLK-03` | Team Leader designation and participant Builder Center verification pending (`P0-03`, `P0-04`) | Affects official hackathon registration and submission eligibility | Team members must complete AWS Builder Center profile verifications and confirm Team Leader | Open |
 | `BLK-04` | Full team agreement on product flows and rules pending (`P0-08`) | Prerequisite for Phase 0 completion | All team members must review and agree to Sections 1 and 2 of the roadmap | Open |
 | `BLK-05` | Team collaborator invitations pending confirmation (`P0-01`) | Team members need GitHub access for review and contributions | Repository owner must invite all team members via GitHub and confirm acceptance | Pending Confirmation |
-| `BLK-06` | Pilot locality and shop dataset unselected (`P0-07`) | Real shop directory cannot be populated | Team must select locality or formally approve synthetic demo dataset (`isDemoData: true`) | Mitigated via Demo Data |
+| `BLK-06` | Pilot dataset for initial prototype (`P0-07`) | Initial shop directory required seed data | Initial prototype synthetic dataset (5 shops in `Demo Locality A`, `isDemoData: true`) is approved. Actual geographic pilot validation remains pending as a future activity | Resolved (Synthetic Data Approved) |
 | `BLK-07` | AWS CLI v2 and AWS SAM CLI not installed in PATH | Prevents local SAM build/deploy commands during Phase 1/Phase 6 | Install AWS CLI v2 and AWS SAM CLI on the local machine (tooling requirement) | Open |
