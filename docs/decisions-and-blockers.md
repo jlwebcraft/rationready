@@ -47,17 +47,19 @@ The following architectural and technical decisions are defined and locked per `
 
 The following decisions and confirmations require human / team intervention:
 
-1. **Designation of Team Leader (`P0-03`):**
+1. **Team Member Collaborator Invitations (`P0-01`):**
+   - Confirm all team members have accepted invitations to the public GitHub repository (`https://github.com/jlwebcraft/rationready`).
+2. **Designation of Team Leader (`P0-03`):**
    - Confirm the designated Team Leader who holds sole responsibility for submitting deliverables through the official Techfest portal.
-2. **Participant Eligibility & Builder Center Verification (`P0-04`):**
+3. **Participant Eligibility & Builder Center Verification (`P0-04`):**
    - Confirm student eligibility and verification status on AWS Builder Center profiles for all participating team members.
-3. **AWS Account, Credits & Service Access Verification (`P0-05`):**
+4. **AWS Account, Credits & Service Access Verification (`P0-05`):**
    - Confirm via the AWS Console that the account plan, available credit balance, required service access (Lambda, API Gateway, DynamoDB, Cognito, CloudWatch), and region selection (`ap-south-1`) are verified.
-4. **AWS Budget & Billing Notifications Verification (`P0-06`):**
+5. **AWS Budget & Billing Notifications Verification (`P0-06`):**
    - Confirm via the AWS Console that an AWS Budget exists, a threshold is configured, and email billing notifications are active.
-5. **Pilot Locality & Shop Dataset Selection (`P0-07`):**
+6. **Pilot Locality & Shop Dataset Selection (`P0-07`):**
    - Select a specific geographic locality and 5–10 verifiable Fair Price Shops, or approve the adoption of synthetic demo shops (`Demo Shop 01`–`Demo Shop 05`, `isDemoData: true`) for initial development.
-6. **Full Team Agreement on Product Specifications (`P0-08`):**
+7. **Full Team Agreement on Product Specifications (`P0-08`):**
    - Formal sign-off and consensus from all team members on the fixed user flows, roles, report fields, and freshness/aggregation rules defined in Sections 1 and 2 of the roadmap.
 
 ---
@@ -99,13 +101,15 @@ These tasks must be verified directly through the AWS Console by the account own
 
 ## 5. GitHub Status
 
-- **Local Git Repository:** Initialized with `main` (deployable) and `develop` (active integration) branches.
-- **Remote Configuration:** No remote origin configured.
-- **Action Required (`P0-01`):**
-  1. Create a remote GitHub repository named `rationready` (or approved team repository name).
-  2. Add team collaborators.
-  3. Link the remote repository: `git remote add origin <repo-url>`.
-  4. Push initial `main` and `develop` branches once approved.
+- **Remote Origin URL:** `https://github.com/jlwebcraft/rationready.git`
+- **Repository Web URL:** `https://github.com/jlwebcraft/rationready`
+- **Repository Visibility:** Public
+- **Pushed Remote Branches:**
+  - `main`: `e21125baf90609e767eb7052966f28af8f666eeb` (tracked by local `main`)
+  - `develop`: `b3bbcd1688d4743a49d12ce988dc6cd52786218a` (tracked by local `develop`)
+- **Upstream Tracking:** Successfully set up for both `main` and `develop`.
+- **Integration Status:** Successful. Remote repository connection and initial pushes completed without history rewrite or force-pushing.
+- **Pending Action (`P0-01`):** Team member collaborator invitations have been initiated / require acceptance confirmation on GitHub. `P0-01` remains unchecked until all team members have been added and confirmed.
 
 ---
 
@@ -127,6 +131,6 @@ These tasks must be verified directly through the AWS Console by the account own
 | `BLK-02` | AWS Budget and billing email notifications unverified (`P0-06`) | Lacks cost protection before resource provisioning | Account owner must create an AWS Budget with email alert in AWS Billing Console and confirm completion | Open |
 | `BLK-03` | Team Leader designation and participant Builder Center verification pending (`P0-03`, `P0-04`) | Affects official hackathon registration and submission eligibility | Team members must complete AWS Builder Center profile verifications and confirm Team Leader | Open |
 | `BLK-04` | Full team agreement on product flows and rules pending (`P0-08`) | Prerequisite for Phase 0 completion | All team members must review and agree to Sections 1 and 2 of the roadmap | Open |
-| `BLK-05` | Remote GitHub repository not yet created (`P0-01`) | Team cannot push code, review PRs, or configure AWS Amplify | Team Leader / Owner must create GitHub repository and configure `origin` | Open |
+| `BLK-05` | Team collaborator invitations pending confirmation (`P0-01`) | Team members need GitHub access for review and contributions | Repository owner must invite all team members via GitHub and confirm acceptance | Pending Confirmation |
 | `BLK-06` | Pilot locality and shop dataset unselected (`P0-07`) | Real shop directory cannot be populated | Team must select locality or formally approve synthetic demo dataset (`isDemoData: true`) | Mitigated via Demo Data |
 | `BLK-07` | AWS CLI v2 and AWS SAM CLI not installed in PATH | Prevents local SAM build/deploy commands during Phase 1/Phase 6 | Install AWS CLI v2 and AWS SAM CLI on the local machine (tooling requirement) | Open |
