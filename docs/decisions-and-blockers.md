@@ -101,16 +101,15 @@ These tasks must be verified directly through the AWS Console by the account own
 
 ## 5. GitHub Status
 
-- **Remote Origin URL:** `https://github.com/jlwebcraft/rationready.git`
 - **Repository Web URL:** `https://github.com/jlwebcraft/rationready`
+- **Remote Origin URL:** `https://github.com/jlwebcraft/rationready.git`
 - **Repository Visibility:** Public
-- **Verified Remote Branches & Commit References:**
-  - **`main`:** Verified HEAD at `e21125baf90609e767eb7052966f28af8f666eeb` (tracked by local `main`).
-  - **`develop`:**
-    - Initial remote push commit: `b3bbcd1688d4743a49d12ce988dc6cd52786218a`
-    - Verified HEAD: `15e8f41ba895aa290c2660b6dcd9de832d061b4e` (tracked by local `develop`)
-- **Upstream Tracking:** Successfully set up for both `main` and `develop`.
-- **Integration Status:** Successful. Remote repository connection and initial pushes completed without history rewrite or force-pushing.
+- **Initial Push Milestones:**
+  - Initial `main` branch push commit: `e21125baf90609e767eb7052966f28af8f666eeb`
+  - Initial `develop` branch push commit: `b3bbcd1688d4743a49d12ce988dc6cd52786218a`
+- **Upstream Tracking:** Successfully configured for both `main` (`origin/main`) and `develop` (`origin/develop`).
+- **GitHub Integration:** Successfully connected and synchronized with remote repository without history rewriting or force-pushing.
+- **Dynamic Branch HEADs:** Active branch HEADs progress dynamically with ongoing development and must be inspected live via GitHub or `git ls-remote origin` rather than hardcoded in static documentation.
 - **Pending Action (`P0-01`):** Team member collaborator invitations have been initiated / require acceptance confirmation on GitHub. `P0-01` remains unchecked until all team members have been added and confirmed.
 
 ---
