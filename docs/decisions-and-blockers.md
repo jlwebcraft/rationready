@@ -2,7 +2,7 @@
 
 > **Project:** RationReady  
 > **Event:** Techfest 2026–27 — Campus to Cloud Hackathon sponsored by AWS  
-> **Last Updated:** 23 November 2026  
+> **Last Updated:** 24 November 2026  
 > **Single Source of Truth:** `RATIONREADY_ROADMAP.md` (v1.0)
 
 ---

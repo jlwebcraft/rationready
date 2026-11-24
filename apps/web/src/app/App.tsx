@@ -8,7 +8,7 @@ import { ErrorState } from '../components/ErrorState';
 import { Clock, Cpu, CheckCircle2, PackageCheck, Info, Layers } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<NavTab>('directory');
+  const [activeTab, setActiveTab] = useState<NavTab>('help');
   const [activeViewMode, setActiveViewMode] = useState<'content' | 'loading' | 'empty' | 'error'>(
     'content'
   );
@@ -23,61 +23,63 @@ export const App: React.FC = () => {
 
       {/* 3. Main Content Area */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-        {/* Shell State Switcher for reviewer inspection */}
-        <section className="bg-white border border-slate-200 rounded-lg p-3 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
-          <div className="flex items-center space-x-2 text-slate-700">
-            <Layers className="w-4 h-4 text-brand-700 shrink-0" />
-            <span className="font-semibold">Shell State Preview:</span>
-            <span className="text-slate-500 hidden sm:inline">
-              Inspect shared application states
-            </span>
-          </div>
-          <div
-            className="inline-flex rounded-md shadow-sm overflow-hidden border border-slate-200"
-            role="group"
-          >
-            <button
-              onClick={() => setActiveViewMode('content')}
-              className={`px-3 py-1.5 font-medium transition-colors ${
-                activeViewMode === 'content'
-                  ? 'bg-brand-700 text-white'
-                  : 'bg-white text-slate-700 hover:bg-slate-100'
-              }`}
+        {/* Shell State Switcher (Rendered strictly in development/testing mode) */}
+        {import.meta.env.DEV === true && (
+          <section className="bg-white border border-slate-200 rounded-lg p-3 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+            <div className="flex items-center space-x-2 text-slate-700">
+              <Layers className="w-4 h-4 text-brand-700 shrink-0" />
+              <span className="font-semibold">Shell State Preview (Dev Only):</span>
+              <span className="text-slate-500 hidden sm:inline">
+                Inspect shared application states
+              </span>
+            </div>
+            <div
+              className="inline-flex rounded-md shadow-sm overflow-hidden border border-slate-200"
+              role="group"
             >
-              Default View
-            </button>
-            <button
-              onClick={() => setActiveViewMode('loading')}
-              className={`px-3 py-1.5 font-medium transition-colors border-l border-slate-200 ${
-                activeViewMode === 'loading'
-                  ? 'bg-brand-700 text-white'
-                  : 'bg-white text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              Loading State
-            </button>
-            <button
-              onClick={() => setActiveViewMode('empty')}
-              className={`px-3 py-1.5 font-medium transition-colors border-l border-slate-200 ${
-                activeViewMode === 'empty'
-                  ? 'bg-brand-700 text-white'
-                  : 'bg-white text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              Empty State
-            </button>
-            <button
-              onClick={() => setActiveViewMode('error')}
-              className={`px-3 py-1.5 font-medium transition-colors border-l border-slate-200 ${
-                activeViewMode === 'error'
-                  ? 'bg-brand-700 text-white'
-                  : 'bg-white text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              Error State
-            </button>
-          </div>
-        </section>
+              <button
+                onClick={() => setActiveViewMode('content')}
+                className={`px-3 py-1.5 font-medium transition-colors ${
+                  activeViewMode === 'content'
+                    ? 'bg-brand-700 text-white'
+                    : 'bg-white text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                Default View
+              </button>
+              <button
+                onClick={() => setActiveViewMode('loading')}
+                className={`px-3 py-1.5 font-medium transition-colors border-l border-slate-200 ${
+                  activeViewMode === 'loading'
+                    ? 'bg-brand-700 text-white'
+                    : 'bg-white text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                Loading State
+              </button>
+              <button
+                onClick={() => setActiveViewMode('empty')}
+                className={`px-3 py-1.5 font-medium transition-colors border-l border-slate-200 ${
+                  activeViewMode === 'empty'
+                    ? 'bg-brand-700 text-white'
+                    : 'bg-white text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                Empty State
+              </button>
+              <button
+                onClick={() => setActiveViewMode('error')}
+                className={`px-3 py-1.5 font-medium transition-colors border-l border-slate-200 ${
+                  activeViewMode === 'error'
+                    ? 'bg-brand-700 text-white'
+                    : 'bg-white text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                Error State
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* Dynamic Display Based on Selected State */}
         {activeViewMode === 'loading' && (

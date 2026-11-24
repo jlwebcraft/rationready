@@ -1,12 +1,15 @@
 import { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 
-export const CORS_HEADERS = {
-  'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
-  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-};
+export function getCorsHeaders(): Record<string, string> {
+  const allowedOrigin = process.env.CORS_ALLOW_ORIGIN || 'http://localhost:3000';
+  return {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers':
+      'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+  };
+}
 
 export function createJsonResponse<T>(
   statusCode: number,
@@ -16,7 +19,7 @@ export function createJsonResponse<T>(
   return {
     statusCode,
     headers: {
-      ...CORS_HEADERS,
+      ...getCorsHeaders(),
       ...headers,
     },
     body: JSON.stringify(body),

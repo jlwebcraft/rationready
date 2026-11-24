@@ -16,17 +16,36 @@ describe('Application Shell Components', () => {
     expect(screen.getByText('Demo Prototype Data')).toBeInTheDocument();
   });
 
-  it('renders Navigation tabs and triggers tab change', () => {
+  it('renders Navigation tabs with disabled indicators for future phases', () => {
     const handleTabChange = vi.fn();
-    render(<Navigation activeTab="directory" onTabChange={handleTabChange} />);
+    render(<Navigation activeTab="help" onTabChange={handleTabChange} />);
 
+    expect(screen.getByText('How It Works')).toBeInTheDocument();
     expect(screen.getByText('Shop Directory')).toBeInTheDocument();
     expect(screen.getByText('Submit Update')).toBeInTheDocument();
     expect(screen.getByText('Shop Manager')).toBeInTheDocument();
-    expect(screen.getByText('How It Works')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Submit Update'));
-    expect(handleTabChange).toHaveBeenCalledWith('report');
+    // Verify Phase badges
+    expect(screen.getByText('Phase 2')).toBeInTheDocument();
+    expect(screen.getByText('Phase 4')).toBeInTheDocument();
+    expect(screen.getByText('Phase 5')).toBeInTheDocument();
+
+    // Disabled tabs do not trigger tab change
+    const disabledTab = screen.getByText('Shop Directory').closest('button');
+    expect(disabledTab).toBeDisabled();
+    expect(disabledTab).toHaveAttribute('aria-disabled', 'true');
+    if (disabledTab) {
+      fireEvent.click(disabledTab);
+    }
+    expect(handleTabChange).not.toHaveBeenCalled();
+
+    // Active/available tab triggers change
+    const activeTab = screen.getByText('How It Works').closest('button');
+    expect(activeTab).not.toBeDisabled();
+    if (activeTab) {
+      fireEvent.click(activeTab);
+    }
+    expect(handleTabChange).toHaveBeenCalledWith('help');
   });
 
   it('renders Footer with public service disclaimer', () => {

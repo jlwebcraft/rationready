@@ -14,6 +14,10 @@ Parameters:
       - staging
       - prod
     Description: Deployment environment name
+  AllowedOrigin:
+    Type: String
+    Default: http://localhost:3000
+    Description: Allowed CORS origin for frontend client
 
 Globals:
   Function:
@@ -25,6 +29,7 @@ Globals:
     Environment:
       Variables:
         NODE_ENV: !Ref Environment
+        CORS_ALLOW_ORIGIN: !Ref AllowedOrigin
         SHOPS_TABLE: !Ref ShopsTable
         REPORTS_TABLE: !Ref ReportsTable
 
@@ -38,7 +43,7 @@ Resources:
       Name: !Sub rationready-http-api-${Environment}
       CorsConfiguration:
         AllowOrigins:
-          - '*'
+          - !Ref AllowedOrigin
         AllowHeaders:
           - Content-Type
           - Authorization
@@ -109,8 +114,6 @@ Resources:
       KeySchema:
         - AttributeName: shopId
           KeyType: HASH
-      PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: true
 
   ReportsTable:
     Type: AWS::DynamoDB::Table
@@ -130,8 +133,6 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: expiresAt
         Enabled: true
-      PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: true
 
   # ============================================================================
   # 4. LAMBDA FUNCTIONS (SKELETON)
