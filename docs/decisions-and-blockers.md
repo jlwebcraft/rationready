@@ -46,6 +46,10 @@ The following architectural and technical decisions are defined and locked per `
   - **Repository:** `https://github.com/jlwebcraft/rationready`.
   - **Responsibility:** Sole authorised person for submitting the official hackathon entry through the Techfest portal.
   - **Scope of Responsibility:** Includes coordinating all final deliverables (idea brief, build summary, AWS architecture, demo video, project links) and ensuring the official submission is completed before the deadline.
+- **Local Development Authorization & Phase Sequencing (24 November 2026):**
+  - **Scope:** The project owner has explicitly authorised beginning local-only Phase 1 development while Phase 0 administrative and AWS verification tasks remain pending.
+  - **Non-Waiver Condition:** Phase 0 remains formally incomplete. Tasks `P0-04` (Builder Center verification), `P0-05` (AWS account verification), and `P0-06` (AWS budget protection) remain pending and are not waived.
+  - **Strict Guardrail:** No AWS cloud resources may be provisioned and no cloud deployments may be attempted during local development. AWS account verification and budget alerts must be completed before any Phase 6 infrastructure deployment.
 
 ---
 
@@ -70,14 +74,14 @@ The following decisions and confirmations require human / team intervention:
 
 ## 3. Environment Status
 
-| Component | Detected State | Required State | Status / Action Needed |
-|---|---|---|---|
-| Node.js | `v24.11.1` | Node.js 20+ / 22 compatible | Satisfied. |
-| npm | `11.6.2` | npm 9+ | Satisfied. |
-| Git | `2.52.0.windows.1` | Git 2.x | Satisfied. |
-| AWS CLI | Not found in PATH | AWS CLI v2 installed & configured | Tooling requirement: Install AWS CLI v2 locally for local SAM builds and deployments (does not affect AWS Console verification). |
-| AWS SAM CLI | Not found in PATH | SAM CLI installed | Tooling requirement: Install AWS SAM CLI for local template validation and deployment. |
-| GitHub CLI (`gh`) | Not found in PATH | Optional | Optional convenience tool; repository can be created via GitHub web interface. |
+| Component         | Detected State     | Required State                    | Status / Action Needed                                                                                                           |
+| ----------------- | ------------------ | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Node.js           | `v24.11.1`         | Node.js 20+ / 22 compatible       | Satisfied.                                                                                                                       |
+| npm               | `11.6.2`           | npm 9+                            | Satisfied.                                                                                                                       |
+| Git               | `2.52.0.windows.1` | Git 2.x                           | Satisfied.                                                                                                                       |
+| AWS CLI           | Not found in PATH  | AWS CLI v2 installed & configured | Tooling requirement: Install AWS CLI v2 locally for local SAM builds and deployments (does not affect AWS Console verification). |
+| AWS SAM CLI       | Not found in PATH  | SAM CLI installed                 | Tooling requirement: Install AWS SAM CLI for local template validation and deployment.                                           |
+| GitHub CLI (`gh`) | Not found in PATH  | Optional                          | Optional convenience tool; repository can be created via GitHub web interface.                                                   |
 
 ---
 
@@ -86,7 +90,9 @@ The following decisions and confirmations require human / team intervention:
 AWS setup is divided into Console verifications (immediate Phase 0 requirements) and local deployment tooling (Phase 1 / Phase 6 requirements):
 
 ### 4.1 AWS Console Verifications (`P0-05` & `P0-06`)
+
 These tasks must be verified directly through the AWS Console by the account owner before provisioning resources:
+
 - **`P0-05` Account Verification:**
   - Active AWS account plan.
   - Available AWS credits or Free Tier status.
@@ -98,6 +104,7 @@ These tasks must be verified directly through the AWS Console by the account own
   - Billing alert email notifications configured and active.
 
 ### 4.2 Local AWS Tooling & Deployment Setup
+
 - Install AWS CLI v2 and AWS SAM CLI on the development workstation.
 - Configure local developer profile via `aws configure` targeting `ap-south-1` (needed when building and deploying backend stacks in Phase 6).
 
@@ -134,24 +141,24 @@ These tasks must be verified directly through the AWS Console by the account own
 
 ### Approved Initial Demonstration Shops
 
-| Shop ID | Shop Name | Locality | Description / Landmark (Fictional) | Data Status | `isDemoData` |
-|---|---|---|---|---|---|
-| `demo-shop-001` | Demo Shop 01 | Demo Locality A | Fictional Demonstration Facility 01, Sector Alpha | DEMO DATA | `true` |
-| `demo-shop-002` | Demo Shop 02 | Demo Locality A | Fictional Demonstration Facility 02, Sector Beta | DEMO DATA | `true` |
-| `demo-shop-003` | Demo Shop 03 | Demo Locality A | Fictional Demonstration Facility 03, Sector Gamma | DEMO DATA | `true` |
-| `demo-shop-004` | Demo Shop 04 | Demo Locality A | Fictional Demonstration Facility 04, Sector Delta | DEMO DATA | `true` |
-| `demo-shop-005` | Demo Shop 05 | Demo Locality A | Fictional Demonstration Facility 05, Sector Epsilon | DEMO DATA | `true` |
+| Shop ID         | Shop Name    | Locality        | Description / Landmark (Fictional)                  | Data Status | `isDemoData` |
+| --------------- | ------------ | --------------- | --------------------------------------------------- | ----------- | ------------ |
+| `demo-shop-001` | Demo Shop 01 | Demo Locality A | Fictional Demonstration Facility 01, Sector Alpha   | DEMO DATA   | `true`       |
+| `demo-shop-002` | Demo Shop 02 | Demo Locality A | Fictional Demonstration Facility 02, Sector Beta    | DEMO DATA   | `true`       |
+| `demo-shop-003` | Demo Shop 03 | Demo Locality A | Fictional Demonstration Facility 03, Sector Gamma   | DEMO DATA   | `true`       |
+| `demo-shop-004` | Demo Shop 04 | Demo Locality A | Fictional Demonstration Facility 04, Sector Delta   | DEMO DATA   | `true`       |
+| `demo-shop-005` | Demo Shop 05 | Demo Locality A | Fictional Demonstration Facility 05, Sector Epsilon | DEMO DATA   | `true`       |
 
 ---
 
 ## 7. Blockers and Required Resolutions
 
-| Blocker ID | Description | Impact | Required Resolution | Status |
-|---|---|---|---|---|
-| `BLK-01` | AWS Console verification of account plan, credits, and services pending (`P0-05`) | Cannot verify AWS service accessibility or credit coverage | Account owner must check AWS Console (Account Plan, Credits, Services, `ap-south-1`) and confirm completion | Open |
-| `BLK-02` | AWS Budget and billing email notifications unverified (`P0-06`) | Lacks cost protection before resource provisioning | Account owner must create an AWS Budget with email alert in AWS Billing Console and confirm completion | Open |
-| `BLK-03` | Participant eligibility and AWS Builder Center verification pending (`P0-04`) | Affects official hackathon registration and submission eligibility | Team members must complete AWS Builder Center profile verifications. (Team Leader designation resolved: Project owner @jlwebcraft confirmed as sole submitter per `P0-03`) | Pending (Participant Verification) |
-| `BLK-04` | Full team agreement on product flows and rules pending (`P0-08`) | Prerequisite for Phase 0 completion | All team members must review and agree to Sections 1 and 2 of the roadmap | Open |
-| `BLK-05` | Team collaborator invitations pending confirmation (`P0-01`) | Team members need GitHub access for review and contributions | Repository owner must invite all team members via GitHub and confirm acceptance | Pending Confirmation |
-| `BLK-06` | Pilot dataset for initial prototype (`P0-07`) | Initial shop directory required seed data | Initial prototype synthetic dataset (5 shops in `Demo Locality A`, `isDemoData: true`) is approved. Actual geographic pilot validation remains pending as a future activity | Resolved (Synthetic Data Approved) |
-| `BLK-07` | AWS CLI v2 and AWS SAM CLI not installed in PATH | Prevents local SAM build/deploy commands during Phase 1/Phase 6 | Install AWS CLI v2 and AWS SAM CLI on the local machine (tooling requirement) | Open |
+| Blocker ID | Description                                                                       | Impact                                                             | Required Resolution                                                                                                                                                         | Status                             |
+| ---------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `BLK-01`   | AWS Console verification of account plan, credits, and services pending (`P0-05`) | Cannot verify AWS service accessibility or credit coverage         | Account owner must check AWS Console (Account Plan, Credits, Services, `ap-south-1`) and confirm completion                                                                 | Open                               |
+| `BLK-02`   | AWS Budget and billing email notifications unverified (`P0-06`)                   | Lacks cost protection before resource provisioning                 | Account owner must create an AWS Budget with email alert in AWS Billing Console and confirm completion                                                                      | Open                               |
+| `BLK-03`   | Participant eligibility and AWS Builder Center verification pending (`P0-04`)     | Affects official hackathon registration and submission eligibility | Team members must complete AWS Builder Center profile verifications. (Team Leader designation resolved: Project owner @jlwebcraft confirmed as sole submitter per `P0-03`)  | Pending (Participant Verification) |
+| `BLK-04`   | Full team agreement on product flows and rules pending (`P0-08`)                  | Prerequisite for Phase 0 completion                                | All team members must review and agree to Sections 1 and 2 of the roadmap                                                                                                   | Open                               |
+| `BLK-05`   | Team collaborator invitations pending confirmation (`P0-01`)                      | Team members need GitHub access for review and contributions       | Repository owner must invite all team members via GitHub and confirm acceptance                                                                                             | Pending Confirmation               |
+| `BLK-06`   | Pilot dataset for initial prototype (`P0-07`)                                     | Initial shop directory required seed data                          | Initial prototype synthetic dataset (5 shops in `Demo Locality A`, `isDemoData: true`) is approved. Actual geographic pilot validation remains pending as a future activity | Resolved (Synthetic Data Approved) |
+| `BLK-07`   | AWS CLI v2 and AWS SAM CLI not installed in PATH                                  | Prevents local SAM build/deploy commands during Phase 1/Phase 6    | Install AWS CLI v2 and AWS SAM CLI on the local machine (tooling requirement)                                                                                               | Open                               |

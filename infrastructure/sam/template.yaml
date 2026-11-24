@@ -1,0 +1,172 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  RationReady — AWS SAM Application Stack Skeleton
+  Techfest 2026-27 Campus to Cloud Hackathon sponsored by AWS.
+  Region: ap-south-1 (Asia Pacific - Mumbai)
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Deployment environment name
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 256
+    Runtime: nodejs22.x
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Environment
+        SHOPS_TABLE: !Ref ShopsTable
+        REPORTS_TABLE: !Ref ReportsTable
+
+Resources:
+  # ============================================================================
+  # 1. API GATEWAY HTTP API
+  # ============================================================================
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Name: !Sub rationready-http-api-${Environment}
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+          - X-Amz-Date
+          - X-Api-Key
+          - X-Amz-Security-Token
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        MaxAge: 600
+
+  # ============================================================================
+  # 2. AMAZON COGNITO AUTHENTICATION
+  # ============================================================================
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub rationready-user-pool-${Environment}
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireUppercase: true
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub rationready-client-${Environment}
+      UserPoolId: !Ref CognitoUserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+
+  ShopManagerGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: SHOP_MANAGER
+      Description: Group for authorised Fair Price Shop managers
+      UserPoolId: !Ref CognitoUserPool
+
+  AdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: ADMIN
+      Description: Group for application administrators
+      UserPoolId: !Ref CognitoUserPool
+
+  # ============================================================================
+  # 3. AMAZON DYNAMODB TABLES
+  # ============================================================================
+  ShopsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub rationready-shops-${Environment}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: shopId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: shopId
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  ReportsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub rationready-reports-${Environment}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: shopId
+          AttributeType: S
+        - AttributeName: reportKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: shopId
+          KeyType: HASH
+        - AttributeName: reportKey
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # ============================================================================
+  # 4. LAMBDA FUNCTIONS (SKELETON)
+  # ============================================================================
+  HealthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/health.handler
+      CodeUri: ../../apps/api/dist/
+      Description: API health check endpoint
+      Events:
+        HealthApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /health
+            Method: GET
+
+Outputs:
+  ApiEndpoint:
+    Description: HTTP API Gateway Endpoint URL
+    Value: !Sub https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com
+
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref CognitoUserPool
+
+  UserPoolClientId:
+    Description: Cognito User Pool App Client ID
+    Value: !Ref CognitoUserPoolClient
+
+  ShopsTableName:
+    Description: DynamoDB Shops Table Name
+    Value: !Ref ShopsTable
+
+  ReportsTableName:
+    Description: DynamoDB Reports Table Name
+    Value: !Ref ReportsTable
