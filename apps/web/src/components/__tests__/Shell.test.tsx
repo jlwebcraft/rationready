@@ -16,42 +16,47 @@ describe('Application Shell Components', () => {
     expect(screen.getByText('Demo Prototype Data')).toBeInTheDocument();
   });
 
-  it('renders Navigation tabs with disabled indicators for future phases', () => {
+  it('renders Navigation tabs with enabled directory and disabled future tabs', () => {
     const handleTabChange = vi.fn();
-    render(<Navigation activeTab="help" onTabChange={handleTabChange} />);
+    render(<Navigation activeTab="directory" onTabChange={handleTabChange} />);
 
     expect(screen.getByText('How It Works')).toBeInTheDocument();
     expect(screen.getByText('Shop Directory')).toBeInTheDocument();
     expect(screen.getByText('Submit Update')).toBeInTheDocument();
     expect(screen.getByText('Shop Manager')).toBeInTheDocument();
 
-    // Verify Phase badges
-    expect(screen.getByText('Phase 2')).toBeInTheDocument();
+    // Verify Phase badges for future phases
     expect(screen.getByText('Phase 4')).toBeInTheDocument();
     expect(screen.getByText('Phase 5')).toBeInTheDocument();
 
-    // Disabled tabs do not trigger tab change
-    const disabledTab = screen.getByText('Shop Directory').closest('button');
+    // Shop Directory is available and active
+    const directoryTab = screen.getByText('Shop Directory').closest('button');
+    expect(directoryTab).not.toBeDisabled();
+    expect(directoryTab).toHaveAttribute('aria-current', 'page');
+
+    // How It Works is available and clickable
+    const helpTab = screen.getByText('How It Works').closest('button');
+    expect(helpTab).not.toBeDisabled();
+    if (helpTab) {
+      fireEvent.click(helpTab);
+    }
+    expect(handleTabChange).toHaveBeenCalledWith('help');
+
+    // Future tabs are disabled
+    const disabledTab = screen.getByText('Submit Update').closest('button');
     expect(disabledTab).toBeDisabled();
     expect(disabledTab).toHaveAttribute('aria-disabled', 'true');
     if (disabledTab) {
       fireEvent.click(disabledTab);
     }
-    expect(handleTabChange).not.toHaveBeenCalled();
-
-    // Active/available tab triggers change
-    const activeTab = screen.getByText('How It Works').closest('button');
-    expect(activeTab).not.toBeDisabled();
-    if (activeTab) {
-      fireEvent.click(activeTab);
-    }
-    expect(handleTabChange).toHaveBeenCalledWith('help');
+    expect(handleTabChange).toHaveBeenCalledTimes(1); // was only called with 'help'
   });
 
-  it('renders Footer with public service disclaimer', () => {
+  it('renders Footer with public service disclaimer and territory', () => {
     render(<Footer />);
     expect(screen.getByText(/Important Public Service Notice & Disclaimer:/i)).toBeInTheDocument();
     expect(screen.getByText(/not an official government portal/i)).toBeInTheDocument();
+    expect(screen.getByText(/Pilot Territory: Demo Locality A/i)).toBeInTheDocument();
   });
 
   it('renders LoadingState with accessible role', () => {

@@ -151,6 +151,29 @@ Resources:
             Path: /health
             Method: GET
 
+  ShopsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/shops.handler
+      CodeUri: ../../apps/api/dist/
+      Description: Public Fair Price Shop directory endpoints
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ShopsTable
+      Events:
+        ListShops:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /shops
+            Method: GET
+        GetShopById:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /shops/{shopId}
+            Method: GET
+
 Outputs:
   ApiEndpoint:
     Description: HTTP API Gateway Endpoint URL

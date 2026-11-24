@@ -29,6 +29,19 @@ export enum ConfidenceLevel {
   MIXED = 'MIXED',
 }
 
+export interface Shop {
+  shopId: string;
+  name: string;
+  locality: string;
+  addressOrLandmark: string;
+  latitude?: number;
+  longitude?: number;
+  openingHours?: string;
+  isDemoData: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ShopSummary {
   shopId: string;
   name: string;
@@ -36,4 +49,26 @@ export interface ShopSummary {
   addressOrLandmark: string;
   isDemoData: boolean;
   updatedAt: string;
+}
+
+export interface ApiResponseSuccess<T> {
+  success: true;
+  data: T;
+}
+
+export interface ApiResponseError {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+}
+
+export type ApiResponse<T> = ApiResponseSuccess<T> | ApiResponseError;
+
+export interface ShopListResponse {
+  shops: Shop[];
+  count: number;
+  locality?: string;
 }

@@ -25,8 +25,91 @@
 
 ### 2. Shop Directory (Phase 2)
 
-- **`GET /shops?locality={locality}`**
-- Returns list of shops filtered by locality.
+#### 2.1 List Shops
+
+- **Endpoint:** `GET /shops`
+- **Query Parameters:**
+  - `locality` (optional, string): Filter shops by locality (e.g. `Demo Locality A`). If omitted, returns all accessible shops.
+- **Response `200 OK`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "shops": [
+      {
+        "shopId": "demo-shop-001",
+        "name": "Demo Shop 01",
+        "locality": "Demo Locality A",
+        "addressOrLandmark": "Fictional Demonstration Facility 01, Sector Alpha",
+        "isDemoData": true,
+        "createdAt": "2026-11-24T00:00:00.000Z",
+        "updatedAt": "2026-11-24T00:00:00.000Z"
+      }
+    ],
+    "count": 1,
+    "locality": "Demo Locality A"
+  }
+}
+```
+
+- **Response `400 Bad Request`:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid locality parameter. Locality must be between 1 and 100 characters."
+  }
+}
+```
+
+#### 2.2 Get Shop Details
+
+- **Endpoint:** `GET /shops/{shopId}`
+- **Path Parameters:**
+  - `shopId` (required, string): Alphanumeric shop ID (e.g. `demo-shop-001`).
+- **Response `200 OK`:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "shopId": "demo-shop-001",
+    "name": "Demo Shop 01",
+    "locality": "Demo Locality A",
+    "addressOrLandmark": "Fictional Demonstration Facility 01, Sector Alpha",
+    "isDemoData": true,
+    "createdAt": "2026-11-24T00:00:00.000Z",
+    "updatedAt": "2026-11-24T00:00:00.000Z"
+  }
+}
+```
+
+- **Response `400 Bad Request`:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid shopId parameter. Must be alphanumeric and 1 to 64 characters."
+  }
+}
+```
+
+- **Response `404 Not Found`:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "SHOP_NOT_FOUND",
+    "message": "Shop with ID 'unknown-shop' not found."
+  }
+}
+```
 
 ### 3. Shop Status (Phase 3)
 

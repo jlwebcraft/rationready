@@ -311,17 +311,17 @@ Dates are in IST. This is a deadline-led plan. Required MVP work takes priority 
 ## Phase 2 — Shop directory and data layer
 **25 November 2026**
 
-- [ ] `P2-01` Define and document the `Shops` and `Reports` DynamoDB key schemas.
-- [ ] `P2-02` Define shared TypeScript domain types and enums for shops, roles, and report payloads.
-- [ ] `P2-03` Implement the DynamoDB repository functions for shop reads and report writes/queries.
-- [ ] `P2-04` Create the public API endpoint to list shops by locality.
-- [ ] `P2-05` Create the public API endpoint to retrieve one shop by `shopId`.
-- [ ] `P2-06` Add backend validation and consistent API response/error formats.
-- [ ] `P2-07` Create the demo-data seed script for 5–10 clearly labelled demo shops and initial demo reports.
-- [ ] `P2-08` Build the frontend shop directory with locality filter and clear demo-data badges.
-- [ ] `P2-09` Build the shop detail page with location/landmark, opening-hours field where verified, and last-updated information.
-- [ ] `P2-10` Add responsive loading, empty, and API-error states to the directory and detail page.
-- [ ] `P2-11` Add unit tests for shop validation, repository mapping, and directory filtering.
+- [x] `P2-01` Define and document the `Shops` and `Reports` DynamoDB key schemas.
+- [x] `P2-02` Define shared TypeScript domain types and enums for shops, roles, and report payloads.
+- [x] `P2-03` Implement the DynamoDB repository functions for shop reads and report writes/queries.
+- [x] `P2-04` Create the public API endpoint to list shops by locality.
+- [x] `P2-05` Create the public API endpoint to retrieve one shop by `shopId`.
+- [x] `P2-06` Add backend validation and consistent API response/error formats.
+- [x] `P2-07` Create the demo-data seed script for 5–10 clearly labelled demo shops and initial demo reports.
+- [x] `P2-08` Build the frontend shop directory with locality filter and clear demo-data badges.
+- [x] `P2-09` Build the shop detail page with location/landmark, opening-hours field where verified, and last-updated information.
+- [x] `P2-10` Add responsive loading, empty, and API-error states to the directory and detail page.
+- [x] `P2-11` Add unit tests for shop validation, repository mapping, and directory filtering.
 - [ ] `P2-12` Commit the working shop directory and create Git tag `v0.2-shop-directory`.
 
 **Phase 2 exit criteria:** A user can browse the pilot shop directory, open a shop detail page, and see whether data is demo or verified. Shop APIs and tests pass.

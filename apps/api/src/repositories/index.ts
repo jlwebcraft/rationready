@@ -1,4 +1,3 @@
-/**
- * Repositories placeholder for Phase 2+ DynamoDB access layer
- */
-export const repositoriesPlaceholder = 'repositories';
+export * from './dynamodb.js';
+export * from './shop.repository.js';
+export * from './report.repository.js';
