@@ -304,7 +304,7 @@ Dates are in IST. This is a deadline-led plan. Required MVP work takes priority 
 - [x] `P1-09` Create the initial README with project purpose, stack, local setup, and security warning.
 - [x] `P1-10` Create the initial `infrastructure/sam/template.yaml` with the application stack skeleton.
 - [x] `P1-11` Build the shared application shell: header, navigation, footer, loading state, empty state, and error state.
-- [ ] `P1-12` Commit the working foundation and create Git tag `v0.1-foundation`.
+- [x] `P1-12` Commit the working foundation and create Git tag `v0.1-foundation`.
 
 **Phase 1 exit criteria:** Frontend starts locally, backend type-checks, repository structure is correct, no secrets are tracked, and the foundation commit/tag exists.
 
