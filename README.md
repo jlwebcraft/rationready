@@ -25,17 +25,17 @@ A wasted visit costs daily-wage earners and vulnerable citizens travel expenses,
 
 ## 2. Technology Stack
 
-| Layer              | Technology                         | Details                                           |
-| ------------------ | ---------------------------------- | ------------------------------------------------- |
-| **Frontend**       | React 18 + Vite 6 + TypeScript     | Fast static client application                    |
-| **Styling**        | Tailwind CSS 3                     | Accessible, clean public-service design system    |
-| **Hosting**        | AWS Amplify Hosting                | Git-connected static hosting (Target for Phase 6) |
-| **Backend API**    | AWS Lambda + TypeScript            | Serverless microservices on Node.js 22 runtime    |
-| **API Gateway**    | Amazon API Gateway HTTP API        | REST routing with Cognito JWT authorizer          |
-| **Database**       | Amazon DynamoDB                    | On-demand tables (`Shops`, `Reports`) with TTL    |
-| **Authentication** | Amazon Cognito User Pool           | Email/password auth with role groups              |
-| **Infrastructure** | AWS SAM / CloudFormation           | Repeatable infrastructure as code                 |
-| **AWS Region**     | Asia Pacific (Mumbai) `ap-south-1` | Target AWS deployment region                      |
+| Layer              | Technology                         | Details                                                                                                                                                    |
+| ------------------ | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend**       | React 18 + Vite 6 + TypeScript     | Fast static client application                                                                                                                             |
+| **Styling**        | Tailwind CSS 3                     | Accessible, clean public-service design system                                                                                                             |
+| **Hosting**        | AWS Amplify Hosting                | Git-connected static hosting (Target for Phase 6)                                                                                                          |
+| **Backend API**    | AWS Lambda + TypeScript            | Serverless microservices on Node.js 22 runtime                                                                                                             |
+| **API Gateway**    | Amazon API Gateway HTTP API        | HTTP API routing with CORS in Phase 1 (Target architecture includes Cognito JWT authorizer; will be attached when protected routes are added in Phase 4/5) |
+| **Database**       | Amazon DynamoDB                    | On-demand tables (`Shops`, `Reports`) with TTL                                                                                                             |
+| **Authentication** | Amazon Cognito User Pool           | User Pool, App Client, and Groups configured in SAM in Phase 1; API Gateway authorizer integration planned for later phases                                |
+| **Infrastructure** | AWS SAM / CloudFormation           | Repeatable infrastructure as code                                                                                                                          |
+| **AWS Region**     | Asia Pacific (Mumbai) `ap-south-1` | Target AWS deployment region                                                                                                                               |
 
 ---
 
@@ -155,5 +155,5 @@ rationready/
 - **Future Phases (Not Yet Started):**
   - AWS Cloud Deployment (Phase 6): Cloud infrastructure not yet provisioned; scheduled for Phase 6 following AWS budget protection confirmation.
   - Live API Functionality & DynamoDB Integration: Scheduled for Phase 2 & Phase 3.
-  - Working Beneficiary/Manager Authentication: Scheduled for Phase 5.
+  - Working Beneficiary/Manager Authentication & API Protection: Cognito User Pool and role groups are scaffolded in SAM for Phase 1; API Gateway JWT authorizer configuration and authenticated submission routes are scheduled for Phase 4 & Phase 5.
   - Interactive Shop Directory & Reporting Flows: Scheduled for Phase 2 & Phase 4.
