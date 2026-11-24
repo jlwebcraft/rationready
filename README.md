@@ -25,17 +25,17 @@ A wasted visit costs daily-wage earners and vulnerable citizens travel expenses,
 
 ## 2. Technology Stack
 
-| Layer              | Technology                         | Details                                                                                                                                                    |
-| ------------------ | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Frontend**       | React 18 + Vite 6 + TypeScript     | Fast static client application                                                                                                                             |
-| **Styling**        | Tailwind CSS 3                     | Accessible, clean public-service design system                                                                                                             |
-| **Hosting**        | AWS Amplify Hosting                | Git-connected static hosting (Target for Phase 6)                                                                                                          |
-| **Backend API**    | AWS Lambda + TypeScript            | Serverless microservices on Node.js 22 runtime                                                                                                             |
-| **API Gateway**    | Amazon API Gateway HTTP API        | HTTP API routing with CORS in Phase 1 (Target architecture includes Cognito JWT authorizer; will be attached when protected routes are added in Phase 4/5) |
-| **Database**       | Amazon DynamoDB                    | On-demand tables (`Shops`, `Reports`) with TTL                                                                                                             |
-| **Authentication** | Amazon Cognito User Pool           | User Pool, App Client, and Groups configured in SAM in Phase 1; API Gateway authorizer integration planned for later phases                                |
-| **Infrastructure** | AWS SAM / CloudFormation           | Repeatable infrastructure as code                                                                                                                          |
-| **AWS Region**     | Asia Pacific (Mumbai) `ap-south-1` | Target AWS deployment region                                                                                                                               |
+| Layer              | Technology                         | Details                                                                                                                                                                                                              |
+| ------------------ | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend**       | React 18 + Vite 6 + TypeScript     | Fast static client application                                                                                                                                                                                       |
+| **Styling**        | Tailwind CSS 3                     | Accessible, clean public-service design system                                                                                                                                                                       |
+| **Hosting**        | AWS Amplify Hosting                | Git-connected static hosting (Target for Phase 6)                                                                                                                                                                    |
+| **Backend API**    | AWS Lambda + TypeScript            | Serverless microservices on Node.js 22 runtime                                                                                                                                                                       |
+| **API Gateway**    | Amazon API Gateway HTTP API        | HTTP API routing and CORS configured in Phase 1 SAM skeleton (Cognito JWT authorizer configuration is scheduled for Phase 5 under P5-04 to protect the report submission endpoint introduced in Phase 3 under P3-11) |
+| **Database**       | Amazon DynamoDB                    | On-demand tables (`Shops`, `Reports`) with TTL                                                                                                                                                                       |
+| **Authentication** | Amazon Cognito User Pool           | User Pool, App Client, and Groups configured in SAM skeleton in Phase 1 (Frontend session handling and backend JWT claim/role derivation scheduled for Phase 5 under P5-05 and P5-06)                                |
+| **Infrastructure** | AWS SAM / CloudFormation           | Repeatable infrastructure as code                                                                                                                                                                                    |
+| **AWS Region**     | Asia Pacific (Mumbai) `ap-south-1` | Target AWS deployment region                                                                                                                                                                                         |
 
 ---
 
@@ -154,6 +154,6 @@ rationready/
 - **Phase 1 (Foundation & Application Shell):** Phase 1 — Foundation implementation under technical review.
 - **Future Phases (Not Yet Started):**
   - AWS Cloud Deployment (Phase 6): Cloud infrastructure not yet provisioned; scheduled for Phase 6 following AWS budget protection confirmation.
-  - Live API Functionality & DynamoDB Integration: Scheduled for Phase 2 & Phase 3.
-  - Working Beneficiary/Manager Authentication & API Protection: Cognito User Pool and role groups are scaffolded in SAM for Phase 1; API Gateway JWT authorizer configuration and authenticated submission routes are scheduled for Phase 4 & Phase 5.
+  - Live API Functionality & DynamoDB Integration: Scheduled for Phase 2 & Phase 3 (including the protected report submission endpoint `POST /shops/{shopId}/reports` under P3-11).
+  - Authentication, Session Integration & JWT Authorizer (Phase 5): Cognito User Pool and role groups are scaffolded in SAM for Phase 1; API Gateway JWT authorizer configuration (P5-04), frontend sign-up/sign-in session handling (P5-05), and backend identity/role derivation from validated JWT claims (P5-06) will be implemented in Phase 5.
   - Interactive Shop Directory & Reporting Flows: Scheduled for Phase 2 & Phase 4.

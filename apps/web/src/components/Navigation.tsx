@@ -65,7 +65,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
                 disabled={isDisabled}
                 aria-disabled={isDisabled}
                 onClick={() => !isDisabled && onTabChange(tab.id)}
-                className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-1 ${
+                className={`flex items-center space-x-2 px-3 sm:px-4 py-2 min-h-11 rounded-md text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-1 ${
                   isDisabled
                     ? 'opacity-60 cursor-not-allowed text-slate-400 bg-slate-50 border border-transparent'
                     : isActive
