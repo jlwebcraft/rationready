@@ -1,0 +1,25 @@
+{
+  "name": "rationready-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RationReady — Know before you go. Community-powered Fair Price Shop visit assistant for Techfest 2026-27.",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm --workspace=@rationready/web run dev",
+    "dev:web": "npm --workspace=@rationready/web run dev",
+    "build": "npm run build --workspaces --if-present",
+    "build:web": "npm --workspace=@rationready/web run build",
+    "build:api": "npm --workspace=@rationready/api run build",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "typescript": "~5.7.2"
+  }
+}

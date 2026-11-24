@@ -293,17 +293,17 @@ Dates are in IST. This is a deadline-led plan. Required MVP work takes priority 
 ## Phase 1 — Foundation and application shell
 **24 November 2026**
 
-- [ ] `P1-01` Create the monorepo folders exactly as specified in Section 3.
-- [ ] `P1-02` Set up the root package scripts/workspaces and pin compatible dependency versions.
-- [ ] `P1-03` Initialise the React + Vite + TypeScript frontend in `apps/web`.
-- [ ] `P1-04` Configure Tailwind CSS and a small, consistent design system.
-- [ ] `P1-05` Initialise the TypeScript Lambda backend in `apps/api` for Node.js 22.
-- [ ] `P1-06` Add formatting, linting, type-check, and test scripts.
-- [ ] `P1-07` Configure `.gitignore` for dependencies, build output, local environment files, coverage, and AWS local files.
-- [ ] `P1-08` Create `.env.example` with variable names and placeholder values only.
-- [ ] `P1-09` Create the initial README with project purpose, stack, local setup, and security warning.
-- [ ] `P1-10` Create the initial `infrastructure/sam/template.yaml` with the application stack skeleton.
-- [ ] `P1-11` Build the shared application shell: header, navigation, footer, loading state, empty state, and error state.
+- [x] `P1-01` Create the monorepo folders exactly as specified in Section 3.
+- [x] `P1-02` Set up the root package scripts/workspaces and pin compatible dependency versions.
+- [x] `P1-03` Initialise the React + Vite + TypeScript frontend in `apps/web`.
+- [x] `P1-04` Configure Tailwind CSS and a small, consistent design system.
+- [x] `P1-05` Initialise the TypeScript Lambda backend in `apps/api` for Node.js 22.
+- [x] `P1-06` Add formatting, linting, type-check, and test scripts.
+- [x] `P1-07` Configure `.gitignore` for dependencies, build output, local environment files, coverage, and AWS local files.
+- [x] `P1-08` Create `.env.example` with variable names and placeholder values only.
+- [x] `P1-09` Create the initial README with project purpose, stack, local setup, and security warning.
+- [x] `P1-10` Create the initial `infrastructure/sam/template.yaml` with the application stack skeleton.
+- [x] `P1-11` Build the shared application shell: header, navigation, footer, loading state, empty state, and error state.
 - [ ] `P1-12` Commit the working foundation and create Git tag `v0.1-foundation`.
 
 **Phase 1 exit criteria:** Frontend starts locally, backend type-checks, repository structure is correct, no secrets are tracked, and the foundation commit/tag exists.

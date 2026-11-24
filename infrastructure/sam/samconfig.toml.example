@@ -1,0 +1,25 @@
+# RationReady AWS SAM Configuration Example
+# Region: ap-south-1 (Asia Pacific - Mumbai)
+# DO NOT commit production secrets to this file.
+
+version = 0.1
+
+[default]
+[default.global.parameters]
+stack_name = "rationready-stack-dev"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.validate.parameters]
+lint = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+s3_prefix = "rationready"
+region = "ap-south-1"
+parameter_overrides = "Environment=\"dev\""
+image_repositories = []
