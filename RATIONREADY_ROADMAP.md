@@ -322,7 +322,7 @@ Dates are in IST. This is a deadline-led plan. Required MVP work takes priority 
 - [x] `P2-09` Build the shop detail page with location/landmark, opening-hours field where verified, and last-updated information.
 - [x] `P2-10` Add responsive loading, empty, and API-error states to the directory and detail page.
 - [x] `P2-11` Add unit tests for shop validation, repository mapping, and directory filtering.
-- [ ] `P2-12` Commit the working shop directory and create Git tag `v0.2-shop-directory`.
+- [x] `P2-12` Commit the working shop directory and create Git tag `v0.2-shop-directory`.
 
 **Phase 2 exit criteria:** A user can browse the pilot shop directory, open a shop detail page, and see whether data is demo or verified. Shop APIs and tests pass.
 
