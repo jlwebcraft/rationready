@@ -70,8 +70,9 @@ export const ShopList: React.FC<ShopListProps> = ({ onSelectShop }) => {
           Fair Price Shop Directory
         </h2>
         <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-3xl">
-          Browse authorized Fair Price Shops in your locality before travelling. Check shop
-          landmarks and operating information.
+          Browse demonstration Fair Price Shop records by locality before travelling. Current pilot
+          entries are fictional demonstration records flagged as demo data; check landmarks and
+          verified operating information where available.
         </p>
       </section>
 

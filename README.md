@@ -111,6 +111,8 @@ rationready/
    cp .env.example .env
    ```
 
+   Vite loads environment variables from the repository root `.env` (`envDir` configured in `apps/web/vite.config.ts`) and only exposes `VITE_`-prefixed keys to browser code. By default, `.env.example` leaves `VITE_API_URL=` blank so the frontend displays local synthetic demonstration shops without requiring a running backend server. To connect to a deployed shop API, set `VITE_API_URL` to its base URL (if configured and unreachable, the UI displays an error state rather than silently falling back to demo data).
+
 4. **Start the frontend development server:**
 
    ```bash
@@ -119,9 +121,16 @@ rationready/
    ```
 
 5. **Build all applications:**
+
    ```bash
    npm run build
    ```
+
+6. **Demo data seed script (dry-run by default):**
+   ```bash
+   npx tsx scripts/seed-demo-data.ts
+   ```
+   Defaults to safe dry-run mode (zero AWS network calls or DynamoDB writes). When writing to provisioned tables (`--execute` with `SHOPS_TABLE`, `REPORTS_TABLE`, and `AWS_REGION`), pass `--timestamp=<UTC-ISO-8601>` to pin timestamps and `reportKey` values; after any partial failure, re-run with the printed `--timestamp=...` value for an idempotent retry.
 
 ---
 
@@ -152,7 +161,7 @@ rationready/
 
 - **Phase 0 (Project Control & Preparation):** In progress (Team Leader `@jlwebcraft` confirmed; synthetic pilot dataset approved; AWS account & budget checks pending human verification).
 - **Phase 1 (Foundation & Application Shell):** Complete and tagged (`v0.1-foundation`).
-- **Phase 2 (Shop Directory & Data Layer):** Complete and under review. Public endpoints `GET /shops` and `GET /shops/{shopId}` implemented with validation and standard envelope, DynamoDB repository layer created, seed script (`scripts/seed-demo-data.ts`) supporting dry-run default and `--execute` DynamoDB writes for 5 synthetic demo shops and 15 initial reports with clock-based timestamps, responsive frontend directory (`VITE_API_URL` configured, explicit API error states, local demo fallback only when unconfigured) and detail views built, and 70 unit tests passing.
+- **Phase 2 (Shop Directory & Data Layer):** Complete and under review. Public endpoints `GET /shops` and `GET /shops/{shopId}` implemented with validation (`shopId`: 1–64 alphanumeric, hyphen, underscore characters) and standard envelope, DynamoDB repository layer created, seed script (`scripts/seed-demo-data.ts`) supporting dry-run default and `--execute` DynamoDB writes with repeatable `--timestamp=<UTC>` retry support for 5 fictional demonstration shops and 15 initial reports, responsive frontend directory (root `.env` loaded via Vite `envDir`, blank `VITE_API_URL=` default local demo mode, explicit API error states) and detail views built, and 77 unit tests passing.
 - **Future Phases (Not Yet Started):**
   - Live AWS Cloud Deployment (Phase 6): Cloud infrastructure not yet provisioned; scheduled for Phase 6 following AWS budget protection confirmation.
   - Reporting, Freshness & Trust Engine (Phase 3): Scheduled for Phase 3 (including `POST /shops/{shopId}/reports` under P3-11 and `GET /shops/{shopId}/status` under P3-12).

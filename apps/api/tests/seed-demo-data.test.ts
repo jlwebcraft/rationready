@@ -4,6 +4,8 @@ import {
   generateDemoShops,
   generateInitialDemoReports,
   seedDemoData,
+  parseUtcSeedTimestamp,
+  parseCliArgs,
   QUEUE_TTL_SECONDS,
   EPOS_TTL_SECONDS,
   STOCK_TTL_SECONDS,
@@ -11,7 +13,8 @@ import {
 import { ReportType } from '../src/domain/types.js';
 
 describe('Demo Data Seed Script', () => {
-  const fixedNow = new Date('2026-11-26T10:00:00.000Z');
+  const explicitTimestamp = '2026-11-26T10:00:00.000Z';
+  const fixedNow = new Date(explicitTimestamp);
   const fixedEpochSeconds = Math.floor(fixedNow.getTime() / 1000);
 
   beforeEach(() => {
@@ -22,7 +25,41 @@ describe('Demo Data Seed Script', () => {
     vi.unstubAllEnvs();
   });
 
-  describe('Data Generation & Timestamps', () => {
+  describe('Timestamp Parsing & CLI Arguments', () => {
+    it('accepts valid UTC ISO-8601 timestamps with or without milliseconds', () => {
+      expect(parseUtcSeedTimestamp('2026-11-26T10:00:00.000Z').toISOString()).toBe(
+        '2026-11-26T10:00:00.000Z'
+      );
+      expect(parseUtcSeedTimestamp('2026-11-26T10:00:00Z').toISOString()).toBe(
+        '2026-11-26T10:00:00.000Z'
+      );
+    });
+
+    it('rejects malformed, non-UTC, or calendar-invalid timestamps', () => {
+      expect(() => parseUtcSeedTimestamp('2026-11-26T10:00:00+05:30')).toThrow(
+        /Invalid UTC seed timestamp/i
+      );
+      expect(() => parseUtcSeedTimestamp('not-a-timestamp')).toThrow(/Invalid UTC seed timestamp/i);
+      expect(() => parseUtcSeedTimestamp('2026-02-30T10:00:00.000Z')).toThrow(
+        /Invalid calendar date/i
+      );
+    });
+
+    it('parses --execute and --timestamp CLI flags accurately', () => {
+      expect(parseCliArgs([])).toEqual({ execute: false, timestamp: undefined });
+      expect(parseCliArgs(['--execute', `--timestamp=${explicitTimestamp}`])).toEqual({
+        execute: true,
+        timestamp: explicitTimestamp,
+      });
+      expect(parseCliArgs(['--timestamp', explicitTimestamp])).toEqual({
+        execute: false,
+        timestamp: explicitTimestamp,
+      });
+      expect(() => parseCliArgs(['--timestamp'])).toThrow(/requires an ISO-8601 UTC value/i);
+    });
+  });
+
+  describe('Data Generation, Timestamps & Repeatability', () => {
     it('generates exactly 5 synthetic shop records with isDemoData: true', () => {
       const shops = generateDemoShops(fixedNow);
 
@@ -30,8 +67,8 @@ describe('Demo Data Seed Script', () => {
       shops.forEach((shop) => {
         expect(shop.isDemoData).toBe(true);
         expect(shop.locality).toBe('Demo Locality A');
-        expect(shop.createdAt).toBe('2026-11-26T10:00:00.000Z');
-        expect(shop.updatedAt).toBe('2026-11-26T10:00:00.000Z');
+        expect(shop.createdAt).toBe(explicitTimestamp);
+        expect(shop.updatedAt).toBe(explicitTimestamp);
       });
     });
 
@@ -41,9 +78,23 @@ describe('Demo Data Seed Script', () => {
       expect(reports).toHaveLength(15);
       reports.forEach((report) => {
         expect(report.isDemoData).toBe(true);
-        expect(report.createdAt).toBe('2026-11-26T10:00:00.000Z');
-        expect(report.reportKey).toBe(`REPORT#2026-11-26T10:00:00.000Z#${report.reportId}`);
+        expect(report.createdAt).toBe(explicitTimestamp);
+        expect(report.reportKey).toBe(`REPORT#${explicitTimestamp}#${report.reportId}`);
       });
+    });
+
+    it('produces identical shop records and report keys across repeated generations with the same timestamp', () => {
+      const t1 = parseUtcSeedTimestamp(explicitTimestamp);
+      const t2 = parseUtcSeedTimestamp(explicitTimestamp);
+
+      const shops1 = generateDemoShops(t1);
+      const shops2 = generateDemoShops(t2);
+      const reports1 = generateInitialDemoReports(t1);
+      const reports2 = generateInitialDemoReports(t2);
+
+      expect(shops1).toEqual(shops2);
+      expect(reports1.map((r) => r.reportKey)).toEqual(reports2.map((r) => r.reportKey));
+      expect(reports1).toEqual(reports2);
     });
 
     it('sets QUEUE expiry to exactly 2 hours (7200s) after creation', () => {
@@ -80,7 +131,7 @@ describe('Demo Data Seed Script', () => {
     });
   });
 
-  describe('Dry-run and Execution Modes', () => {
+  describe('Dry-run and Repeatable Execution Modes', () => {
     it('performs zero DynamoDB writes in default dry-run mode', async () => {
       const mockSend = vi.fn();
       const mockDocClient = { send: mockSend } as unknown as DynamoDBDocumentClient;
@@ -147,14 +198,14 @@ describe('Demo Data Seed Script', () => {
         shopsTable: 'rationready-shops-test',
         reportsTable: 'rationready-reports-test',
         region: 'ap-south-1',
-        now: () => fixedNow,
+        timestamp: explicitTimestamp,
       });
 
       expect(result.success).toBe(true);
       expect(result.dryRun).toBe(false);
       expect(result.shopsWritten).toBe(5);
       expect(result.reportsWritten).toBe(15);
-      expect(result.createdAt).toBe('2026-11-26T10:00:00.000Z');
+      expect(result.createdAt).toBe(explicitTimestamp);
       expect(mockSend).toHaveBeenCalledTimes(20);
 
       const commands = mockSend.mock.calls.map((call) => call[0] as PutCommand);
@@ -174,7 +225,44 @@ describe('Demo Data Seed Script', () => {
       });
     });
 
-    it('reports partial write failures accurately and does not return success', async () => {
+    it('produces identical DynamoDB PutCommand keys across two mocked seed executions with the same timestamp', async () => {
+      const mockSendRun1 = vi.fn().mockResolvedValue({});
+      const mockSendRun2 = vi.fn().mockResolvedValue({});
+      const client1 = { send: mockSendRun1 } as unknown as DynamoDBDocumentClient;
+      const client2 = { send: mockSendRun2 } as unknown as DynamoDBDocumentClient;
+
+      await seedDemoData({
+        dryRun: false,
+        docClient: client1,
+        shopsTable: 'rationready-shops-test',
+        reportsTable: 'rationready-reports-test',
+        region: 'ap-south-1',
+        timestamp: explicitTimestamp,
+      });
+
+      await seedDemoData({
+        dryRun: false,
+        docClient: client2,
+        shopsTable: 'rationready-shops-test',
+        reportsTable: 'rationready-reports-test',
+        region: 'ap-south-1',
+        timestamp: explicitTimestamp,
+      });
+
+      const extractKeys = (calls: unknown[][]) =>
+        calls.map((call) => {
+          const item = (call[0] as PutCommand).input.Item;
+          return {
+            tableName: (call[0] as PutCommand).input.TableName,
+            shopId: item?.shopId,
+            reportKey: item?.reportKey,
+          };
+        });
+
+      expect(extractKeys(mockSendRun1.mock.calls)).toEqual(extractKeys(mockSendRun2.mock.calls));
+    });
+
+    it('reports partial write failures accurately with the original seed timestamp for retry', async () => {
       let callCount = 0;
       const mockSend = vi.fn().mockImplementation(async () => {
         callCount += 1;
@@ -195,7 +283,9 @@ describe('Demo Data Seed Script', () => {
           now: fixedNow,
         })
       ).rejects.toThrow(
-        /Write failed for report 'demo-rep-001-epos'.*ProvisionedThroughputExceededException.*Partial progress: 5\/5 shops, 1\/15 reports written/
+        new RegExp(
+          `Write failed for report 'demo-rep-001-epos'.*ProvisionedThroughputExceededException.*Partial progress: 5/5 shops, 1/15 reports written.*--timestamp=${explicitTimestamp}`
+        )
       );
 
       expect(mockSend).toHaveBeenCalledTimes(7);

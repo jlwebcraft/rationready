@@ -4,8 +4,10 @@
  * Implements deterministic generation of the five approved synthetic demonstration
  * shops for Demo Locality A and initial synthetic demo reports.
  *
- * SAFETY GUARDRAILS:
+ * SAFETY & RETRY GUARDRAILS:
  * - Defaults to DRY-RUN mode. Live writes require explicit --execute flag and valid environment configuration.
+ * - Optional --timestamp=<ISO-8601-UTC> pins createdAt, expiresAt, and reportKey for idempotent retries.
+ * - After a partial failure, re-run with the printed --timestamp=<createdAt> so reportKeys remain identical.
  * - Every record has isDemoData: true.
  * - No real addresses, coordinates, or live operational claims are introduced.
  */
@@ -65,6 +67,62 @@ const DEMO_SHOP_TEMPLATES: DemoShopTemplate[] = [
     addressOrLandmark: 'Fictional Demonstration Facility 05, Sector Epsilon',
   },
 ];
+
+const UTC_ISO_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
+
+/**
+ * Validates and parses an explicit UTC ISO-8601 seed timestamp.
+ */
+export function parseUtcSeedTimestamp(rawTimestamp: string): Date {
+  const trimmed = rawTimestamp.trim();
+  if (!UTC_ISO_PATTERN.test(trimmed)) {
+    throw new Error(
+      `[RationReady Seed] ERROR: Invalid UTC seed timestamp '${rawTimestamp}'. Expected ISO-8601 UTC format such as '2026-11-26T10:00:00.000Z'.`
+    );
+  }
+
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error(`[RationReady Seed] ERROR: Unparseable UTC seed timestamp '${rawTimestamp}'.`);
+  }
+
+  // Reject calendar rollovers such as 2026-02-30T10:00:00.000Z
+  if (parsed.toISOString().slice(0, 19) !== trimmed.slice(0, 19)) {
+    throw new Error(
+      `[RationReady Seed] ERROR: Invalid calendar date/time in UTC seed timestamp '${rawTimestamp}'.`
+    );
+  }
+
+  return parsed;
+}
+
+/**
+ * Parses CLI flags for the seed script (--execute and optional --timestamp).
+ */
+export function parseCliArgs(argv: string[]): { execute: boolean; timestamp?: string } {
+  let execute = false;
+  let timestamp: string | undefined;
+
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === '--execute') {
+      execute = true;
+    } else if (arg.startsWith('--timestamp=')) {
+      timestamp = arg.slice('--timestamp='.length);
+    } else if (arg === '--timestamp') {
+      const next = argv[i + 1];
+      if (!next || next.startsWith('--')) {
+        throw new Error(
+          '[RationReady Seed] ERROR: --timestamp flag requires an ISO-8601 UTC value (e.g. --timestamp=2026-11-26T10:00:00.000Z).'
+        );
+      }
+      timestamp = next;
+      i += 1;
+    }
+  }
+
+  return { execute, timestamp };
+}
 
 /**
  * Generates the five synthetic demonstration shops with timestamps from the provided clock.
@@ -150,6 +208,7 @@ export interface SeedOptions {
   shopsTable?: string;
   reportsTable?: string;
   region?: string;
+  timestamp?: string;
   now?: Date | (() => Date);
 }
 
@@ -165,17 +224,26 @@ export interface SeedResult {
 }
 
 /**
- * Executes the seed routine with explicit dryRun safety.
+ * Executes the seed routine with explicit dryRun safety and repeatable timestamp support.
  */
 export async function seedDemoData(options: SeedOptions = {}): Promise<SeedResult> {
   const isDryRun = options.dryRun ?? true;
-  const executionTime =
-    typeof options.now === 'function' ? options.now() : (options.now ?? new Date());
+
+  let executionTime: Date;
+  if (options.timestamp !== undefined) {
+    executionTime = parseUtcSeedTimestamp(options.timestamp);
+  } else if (typeof options.now === 'function') {
+    executionTime = options.now();
+  } else {
+    executionTime = options.now ?? new Date();
+  }
+
+  const createdAt = executionTime.toISOString();
   const shops = generateDemoShops(executionTime);
   const reports = generateInitialDemoReports(executionTime);
 
   console.log(`[RationReady Seed] Locality: ${DEMO_LOCALITY}`);
-  console.log(`[RationReady Seed] Execution Timestamp: ${executionTime.toISOString()}`);
+  console.log(`[RationReady Seed] Execution Timestamp: ${createdAt}`);
   console.log(`[RationReady Seed] Target Synthetic Shops: ${shops.length}`);
   console.log(`[RationReady Seed] Target Synthetic Reports: ${reports.length}`);
   console.log(
@@ -196,7 +264,7 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<SeedResul
       reportsCount: reports.length,
       shopsWritten: 0,
       reportsWritten: 0,
-      createdAt: executionTime.toISOString(),
+      createdAt,
       message: 'Dry run completed successfully. Zero AWS resources modified.',
     };
   }
@@ -236,6 +304,9 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<SeedResul
   console.log(
     `[RationReady Seed] Writing to DynamoDB tables in ${region}: ${shopsTable}, ${reportsTable}`
   );
+  console.log(
+    `[RationReady Seed] Seed Timestamp (reuse for idempotent retry): --timestamp=${createdAt}`
+  );
 
   let shopsWritten = 0;
   let reportsWritten = 0;
@@ -247,7 +318,7 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<SeedResul
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       throw new Error(
-        `[RationReady Seed] Write failed for shop '${shop.shopId}' in table '${shopsTable}': ${errorMessage}. Partial progress: ${shopsWritten}/${shops.length} shops, ${reportsWritten}/${reports.length} reports written.`
+        `[RationReady Seed] Write failed for shop '${shop.shopId}' in table '${shopsTable}': ${errorMessage}. Partial progress: ${shopsWritten}/${shops.length} shops, ${reportsWritten}/${reports.length} reports written. Retry cleanly with: --timestamp=${createdAt}`
       );
     }
   }
@@ -259,7 +330,7 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<SeedResul
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       throw new Error(
-        `[RationReady Seed] Write failed for report '${report.reportId}' in table '${reportsTable}': ${errorMessage}. Partial progress: ${shopsWritten}/${shops.length} shops, ${reportsWritten}/${reports.length} reports written.`
+        `[RationReady Seed] Write failed for report '${report.reportId}' in table '${reportsTable}': ${errorMessage}. Partial progress: ${shopsWritten}/${shops.length} shops, ${reportsWritten}/${reports.length} reports written. Retry cleanly with: --timestamp=${createdAt}`
       );
     }
   }
@@ -271,8 +342,8 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<SeedResul
     reportsCount: reports.length,
     shopsWritten,
     reportsWritten,
-    createdAt: executionTime.toISOString(),
-    message: `Seeding executed successfully. Wrote ${shopsWritten} shops and ${reportsWritten} reports.`,
+    createdAt,
+    message: `Seeding executed successfully. Wrote ${shopsWritten} shops and ${reportsWritten} reports (timestamp=${createdAt}).`,
   };
 }
 
@@ -282,8 +353,11 @@ const invokedFilePath = process.argv[1] ? path.resolve(process.argv[1]) : '';
 const isDirectRun = invokedFilePath === currentFilePath;
 
 if (isDirectRun) {
-  const executeRequested = process.argv.includes('--execute');
-  seedDemoData({ dryRun: !executeRequested })
+  Promise.resolve()
+    .then(() => {
+      const { execute, timestamp } = parseCliArgs(process.argv.slice(2));
+      return seedDemoData({ dryRun: !execute, timestamp });
+    })
     .then((result) => {
       console.log(`[RationReady Seed] Summary: ${result.message}`);
     })

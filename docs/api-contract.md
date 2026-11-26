@@ -69,7 +69,7 @@
 
 - **Endpoint:** `GET /shops/{shopId}`
 - **Path Parameters:**
-  - `shopId` (required, string): Alphanumeric shop ID (e.g. `demo-shop-001`).
+  - `shopId` (required, string): Shop ID between 1 and 64 characters using alphanumeric characters, hyphens (`-`), or underscores (`_`) (e.g. `demo-shop-001`).
 - **Response `200 OK`:**
 
 ```json
@@ -94,7 +94,7 @@
   "success": false,
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "Invalid shopId parameter. Must be alphanumeric and 1 to 64 characters."
+    "message": "Invalid shopId parameter. Only alphanumeric, hyphens, and underscores are allowed."
   }
 }
 ```

@@ -6,20 +6,21 @@
 
 ## 1. Test Execution Summary
 
-A total of **70 automated unit tests** run across the monorepo via Vitest, achieving 100% pass rate.
+A total of **77 automated unit tests** run across the monorepo via Vitest, achieving 100% pass rate.
 
-| Workspace          | Test Suite                                    | Tests        | Status         |
-| ------------------ | --------------------------------------------- | ------------ | -------------- |
-| `@rationready/api` | `tests/health.test.ts`                        | 2            | Passed         |
-| `@rationready/api` | `tests/shop.validator.test.ts`                | 13           | Passed         |
-| `@rationready/api` | `tests/shop.repository.test.ts`               | 5            | Passed         |
-| `@rationready/api` | `tests/report.repository.test.ts`             | 2            | Passed         |
-| `@rationready/api` | `tests/shops.handler.test.ts`                 | 10           | Passed         |
-| `@rationready/api` | `tests/seed-demo-data.test.ts`                | 10           | Passed         |
-| `@rationready/web` | `src/components/__tests__/Shell.test.tsx`     | 6            | Passed         |
-| `@rationready/web` | `src/features/shops/__tests__/api.test.ts`    | 12           | Passed         |
-| `@rationready/web` | `src/features/shops/__tests__/Shops.test.tsx` | 10           | Passed         |
-| **Total**          | **9 suites**                                  | **70 tests** | **All Passed** |
+| Workspace          | Test Suite                                        | Tests        | Status         |
+| ------------------ | ------------------------------------------------- | ------------ | -------------- |
+| `@rationready/api` | `tests/health.test.ts`                            | 2            | Passed         |
+| `@rationready/api` | `tests/shop.validator.test.ts`                    | 13           | Passed         |
+| `@rationready/api` | `tests/shop.repository.test.ts`                   | 5            | Passed         |
+| `@rationready/api` | `tests/report.repository.test.ts`                 | 2            | Passed         |
+| `@rationready/api` | `tests/shops.handler.test.ts`                     | 10           | Passed         |
+| `@rationready/api` | `tests/seed-demo-data.test.ts`                    | 15           | Passed         |
+| `@rationready/web` | `src/components/__tests__/Shell.test.tsx`         | 6            | Passed         |
+| `@rationready/web` | `src/features/shops/__tests__/api.test.ts`        | 12           | Passed         |
+| `@rationready/web` | `src/features/shops/__tests__/env-config.test.ts` | 2            | Passed         |
+| `@rationready/web` | `src/features/shops/__tests__/Shops.test.tsx`     | 10           | Passed         |
+| **Total**          | **10 suites**                                     | **77 tests** | **All Passed** |
 
 ---
 
@@ -28,16 +29,16 @@ A total of **70 automated unit tests** run across the monorepo via Vitest, achie
 ### Backend Unit Tests (`apps/api`)
 
 - **Health Handler (`health.test.ts`):** Validates 200 OK status, timestamp generation, and service metadata.
-- **Shop Validators (`shop.validator.test.ts`):** Validates shop ID constraints, locality name constraints, full shop object validation, demo flag enforcement, and rejection of invalid/malformed payloads.
+- **Shop Validators (`shop.validator.test.ts`):** Validates shop ID constraints (1–64 chars: alphanumeric, hyphens, underscores), locality name constraints, full shop object validation, demo flag enforcement, and rejection of invalid/malformed payloads.
 - **Shop Repository (`shop.repository.test.ts`):** Tests DynamoDB document client interactions using mocked AWS SDK calls: `getShopById` success and not-found, `listShops` without filter, `listShops` with locality filter, and `saveShop`.
 - **Report Repository (`report.repository.test.ts`):** Tests `createReport` and `getReportsByShopId` verifying reverse chronological sorting and DynamoDB mapping.
 - **Shops Handler (`shops.handler.test.ts`):** Validates `GET /shops` (all shops), `GET /shops?locality=...` (filtering), `GET /shops/{shopId}` (retrieval and 404), parameter validation errors (400), unsupported HTTP methods (405), and error envelope compliance.
-- **Demo Data Seed Script (`seed-demo-data.test.ts`):** Validates 5 shops and 15 reports generation with `isDemoData: true`, clock-based UTC ISO-8601 timestamps, 2h/4h/24h TTL expiry calculations, matching `reportKey` formatting, zero DynamoDB writes in dry-run mode, `SHOPS_TABLE`/`REPORTS_TABLE`/`AWS_REGION` validation, all 20 mocked `PutCommand` writes in execution mode, and accurate partial-write failure reporting.
+- **Demo Data Seed Script (`seed-demo-data.test.ts`):** Validates UTC `--timestamp` parsing and validation (rejecting non-UTC/calendar-invalid dates), CLI argument parsing, repeatable `reportKey` generation across identical timestamps, identical mocked DynamoDB `PutCommand` keys on retry runs, 5 shops & 15 reports generation with `isDemoData: true`, 2h/4h/24h TTL expiry calculations, zero DynamoDB writes in dry-run mode, `SHOPS_TABLE`/`REPORTS_TABLE`/`AWS_REGION` validation, all 20 mocked `PutCommand` writes in execution mode, and partial-write failure reporting including the original `--timestamp` flag for operator retries.
 
 ### Frontend Unit Tests (`apps/web`)
 
 - **Application Shell (`Shell.test.tsx`):** Verifies header title, subtitle, navigation tabs, footer notices, and responsive states (`LoadingState`, `EmptyState`, `ErrorState`).
-- **Shops API Client (`api.test.ts`):** Verifies `VITE_API_URL` configuration (ignoring `VITE_API_BASE_URL`), local synthetic demo shop fallback only when `VITE_API_URL` is unset, valid API responses, HTTP 404 returning `null` for `fetchShopById`, and explicit error throwing on non-success HTTP statuses, network failures, and malformed envelopes.
+- **Shops API Client & Root Env Config (`api.test.ts`, `env-config.test.ts`):** Verifies Vite's `envDir` resolves to repository root (with `.env.example` defaulting to blank `VITE_API_URL=`), `VITE_` prefix restriction (`AWS_REGION` excluded via real Vite `loadEnv`), `VITE_API_URL` consumption (ignoring `VITE_API_BASE_URL`), local synthetic demo shop fallback only when `VITE_API_URL` is unset, valid API responses, HTTP 404 returning `null` for `fetchShopById`, and explicit error throwing on non-success HTTP statuses, network failures, and malformed envelopes.
 - **Shop Directory Components (`Shops.test.tsx`):**
   - `ShopCard`: Renders shop name, locality badge, demo badge, landmark, and view details CTA.
   - `ShopFilter`: Renders locality dropdown, search input, and calls filter change callbacks.
