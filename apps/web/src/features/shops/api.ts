@@ -50,57 +50,118 @@ export const DEMO_SHOPS: Shop[] = [
   },
 ];
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-
 /**
- * Fetches shops from backend API or falls back to synthetic demonstration shops.
+ * Returns the configured backend API URL from VITE_API_URL, or empty string if unconfigured.
  */
-export async function fetchShops(locality?: string): Promise<Shop[]> {
-  if (API_BASE_URL) {
-    try {
-      const url = new URL('/shops', API_BASE_URL);
-      if (locality && locality !== 'ALL') {
-        url.searchParams.set('locality', locality);
-      }
-      const res = await fetch(url.toString());
-      if (res.ok) {
-        const body = await res.json();
-        if (body.success && Array.isArray(body.data?.shops)) {
-          return body.data.shops;
-        }
-      }
-    } catch {
-      // Fallback to local demo data
+export function getApiUrl(): string {
+  return (import.meta.env.VITE_API_URL ?? '').trim();
+}
+
+async function parseJsonSafely(res: Response): Promise<Record<string, unknown> | null> {
+  try {
+    const parsed: unknown = await res.json();
+    if (parsed && typeof parsed === 'object') {
+      return parsed as Record<string, unknown>;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function extractApiErrorMessage(body: Record<string, unknown> | null, fallback: string): string {
+  const errObj = body?.error;
+  if (errObj && typeof errObj === 'object' && 'message' in errObj) {
+    const msg = (errObj as { message?: unknown }).message;
+    if (typeof msg === 'string' && msg.trim().length > 0) {
+      return msg;
     }
   }
-
-  // Local demo data filtering
-  if (locality && locality !== 'ALL') {
-    return DEMO_SHOPS.filter((s) => s.locality.toLowerCase() === locality.trim().toLowerCase());
-  }
-
-  return [...DEMO_SHOPS];
+  return fallback;
 }
 
 /**
- * Fetches an individual shop by shopId.
+ * Fetches shops from the configured backend API (VITE_API_URL).
+ * Falls back to local synthetic demonstration shops ONLY when no API URL is configured.
+ * Throws meaningful errors on HTTP, network, or response-envelope failures.
  */
-export async function fetchShopById(shopId: string): Promise<Shop | null> {
-  if (API_BASE_URL) {
-    try {
-      const url = new URL(`/shops/${encodeURIComponent(shopId)}`, API_BASE_URL);
-      const res = await fetch(url.toString());
-      if (res.ok) {
-        const body = await res.json();
-        if (body.success && body.data) {
-          return body.data;
-        }
-      }
-    } catch {
-      // Fallback to local demo data
+export async function fetchShops(locality?: string): Promise<Shop[]> {
+  const apiUrl = getApiUrl();
+
+  if (!apiUrl) {
+    if (locality && locality !== 'ALL') {
+      return DEMO_SHOPS.filter((s) => s.locality.toLowerCase() === locality.trim().toLowerCase());
     }
+    return [...DEMO_SHOPS];
   }
 
-  const found = DEMO_SHOPS.find((s) => s.shopId === shopId);
-  return found || null;
+  const url = new URL('/shops', apiUrl);
+  if (locality && locality !== 'ALL') {
+    url.searchParams.set('locality', locality);
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(url.toString());
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'Network request failed';
+    throw new Error(`Unable to reach shop directory API: ${reason}`);
+  }
+
+  const body = await parseJsonSafely(res);
+
+  if (!res.ok) {
+    throw new Error(extractApiErrorMessage(body, `Failed to load shops (HTTP ${res.status})`));
+  }
+
+  const data = body?.data as { shops?: unknown } | undefined;
+  if (!body || body.success !== true || !data || !Array.isArray(data.shops)) {
+    throw new Error('Received an invalid response envelope from the shop directory API.');
+  }
+
+  return data.shops as Shop[];
+}
+
+/**
+ * Fetches an individual shop by shopId from the configured backend API (VITE_API_URL).
+ * Returns null on HTTP 404 so the UI can display a not-found state.
+ * Falls back to local synthetic demonstration shops ONLY when no API URL is configured.
+ * Throws meaningful errors on other HTTP, network, or response-envelope failures.
+ */
+export async function fetchShopById(shopId: string): Promise<Shop | null> {
+  const apiUrl = getApiUrl();
+
+  if (!apiUrl) {
+    const found = DEMO_SHOPS.find((s) => s.shopId === shopId);
+    return found || null;
+  }
+
+  const url = new URL(`/shops/${encodeURIComponent(shopId)}`, apiUrl);
+
+  let res: Response;
+  try {
+    res = await fetch(url.toString());
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'Network request failed';
+    throw new Error(`Unable to reach shop detail API: ${reason}`);
+  }
+
+  if (res.status === 404) {
+    return null;
+  }
+
+  const body = await parseJsonSafely(res);
+
+  if (!res.ok) {
+    throw new Error(
+      extractApiErrorMessage(body, `Failed to load shop '${shopId}' (HTTP ${res.status})`)
+    );
+  }
+
+  const shopData = body?.data as Partial<Shop> | undefined;
+  if (!body || body.success !== true || !shopData || typeof shopData.shopId !== 'string') {
+    throw new Error('Received an invalid response envelope from the shop detail API.');
+  }
+
+  return shopData as Shop;
 }

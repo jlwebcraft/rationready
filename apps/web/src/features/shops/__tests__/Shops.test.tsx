@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ShopList } from '../ShopList';
 import { ShopDetail } from '../ShopDetail';
@@ -7,6 +7,14 @@ import { ShopFilter } from '../ShopFilter';
 import { DEMO_SHOPS } from '../api';
 
 describe('Shop Directory Frontend Components', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
   describe('ShopCard', () => {
     const shop = DEMO_SHOPS[0];
 
@@ -102,6 +110,39 @@ describe('Shop Directory Frontend Components', () => {
 
       expect(screen.getByText('Demo Shop 01')).toBeInTheDocument();
     });
+
+    it('displays ErrorState when configured API fails and retries on button click', async () => {
+      vi.stubEnv('VITE_API_URL', 'https://api.rationready.example.com');
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockRejectedValueOnce(new Error('Connection refused'))
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              success: true,
+              data: { shops: DEMO_SHOPS, total: DEMO_SHOPS.length },
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          )
+        );
+
+      render(<ShopList onSelectShop={vi.fn()} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Directory Load Error')).toBeInTheDocument();
+      });
+      expect(
+        screen.getByText(/Unable to reach shop directory API: Connection refused/i)
+      ).toBeInTheDocument();
+
+      const retryBtn = screen.getByRole('button', { name: /Try Again/i });
+      fireEvent.click(retryBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText('Demo Shop 01')).toBeInTheDocument();
+      });
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('ShopDetail', () => {
@@ -139,6 +180,43 @@ describe('Shop Directory Frontend Components', () => {
       expect(
         screen.getByText(/Shop with ID 'nonexistent-shop-id' was not found/i)
       ).toBeInTheDocument();
+    });
+
+    it('renders Shop Not Found on HTTP 404 from configured API', async () => {
+      vi.stubEnv('VITE_API_URL', 'https://api.rationready.example.com');
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(
+          JSON.stringify({ success: false, error: { code: 'NOT_FOUND', message: 'Not found' } }),
+          { status: 404, headers: { 'Content-Type': 'application/json' } }
+        )
+      );
+
+      render(<ShopDetail shopId="missing-404" onBack={vi.fn()} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Shop Not Found')).toBeInTheDocument();
+      });
+      expect(screen.getByText(/Shop with ID 'missing-404' was not found/i)).toBeInTheDocument();
+    });
+
+    it('renders Shop Load Error when configured API fails with 500 or network error', async () => {
+      vi.stubEnv('VITE_API_URL', 'https://api.rationready.example.com');
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: false,
+            error: { code: 'INTERNAL_ERROR', message: 'DynamoDB read error' },
+          }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        )
+      );
+
+      render(<ShopDetail shopId="demo-shop-001" onBack={vi.fn()} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Shop Load Error')).toBeInTheDocument();
+      });
+      expect(screen.getByText(/DynamoDB read error/i)).toBeInTheDocument();
     });
   });
 });

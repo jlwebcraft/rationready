@@ -152,7 +152,7 @@ rationready/
 
 - **Phase 0 (Project Control & Preparation):** In progress (Team Leader `@jlwebcraft` confirmed; synthetic pilot dataset approved; AWS account & budget checks pending human verification).
 - **Phase 1 (Foundation & Application Shell):** Complete and tagged (`v0.1-foundation`).
-- **Phase 2 (Shop Directory & Data Layer):** Complete and under review. Public endpoints `GET /shops` and `GET /shops/{shopId}` implemented with validation and standard envelope, DynamoDB repository layer created, 5 synthetic demo shops seeded in `Demo Locality A`, responsive frontend directory and detail views built with prominent demo data indicators, and 45 unit tests passing.
+- **Phase 2 (Shop Directory & Data Layer):** Complete and under review. Public endpoints `GET /shops` and `GET /shops/{shopId}` implemented with validation and standard envelope, DynamoDB repository layer created, seed script (`scripts/seed-demo-data.ts`) supporting dry-run default and `--execute` DynamoDB writes for 5 synthetic demo shops and 15 initial reports with clock-based timestamps, responsive frontend directory (`VITE_API_URL` configured, explicit API error states, local demo fallback only when unconfigured) and detail views built, and 70 unit tests passing.
 - **Future Phases (Not Yet Started):**
   - Live AWS Cloud Deployment (Phase 6): Cloud infrastructure not yet provisioned; scheduled for Phase 6 following AWS budget protection confirmation.
   - Reporting, Freshness & Trust Engine (Phase 3): Scheduled for Phase 3 (including `POST /shops/{shopId}/reports` under P3-11 and `GET /shops/{shopId}/status` under P3-12).

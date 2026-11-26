@@ -24,8 +24,12 @@ export const ShopList: React.FC<ShopListProps> = ({ onSelectShop }) => {
       setError(null);
       const data = await fetchShops(selectedLocality);
       setShops(data);
-    } catch {
-      setError('Unable to load shop directory. Please try again.');
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Unable to load shop directory. Please try again.';
+      setError(message);
     } finally {
       setLoading(false);
     }

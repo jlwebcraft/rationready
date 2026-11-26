@@ -23,19 +23,26 @@ export const ShopDetail: React.FC<ShopDetailProps> = ({ shopId, onBack }) => {
   const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState<boolean>(false);
 
   const loadShop = async () => {
     try {
       setLoading(true);
       setError(null);
+      setNotFound(false);
       const data = await fetchShopById(shopId);
       if (!data) {
+        setNotFound(true);
         setError(`Shop with ID '${shopId}' was not found.`);
       } else {
         setShop(data);
       }
-    } catch {
-      setError('Unable to load shop details. Please check your connection.');
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Unable to load shop details. Please check your connection.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -60,7 +67,7 @@ export const ShopDetail: React.FC<ShopDetailProps> = ({ shopId, onBack }) => {
           <span>Back to Directory</span>
         </button>
         <ErrorState
-          title="Shop Not Found"
+          title={notFound ? 'Shop Not Found' : 'Shop Load Error'}
           message={error || `Could not find shop with ID '${shopId}'.`}
           onRetry={loadShop}
         />
