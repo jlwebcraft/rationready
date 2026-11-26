@@ -316,7 +316,11 @@ Server-managed attributes are assigned as follows:
 
 A user sub is restricted to submitting at most one report per category every **60 seconds** for a given shop:
 `(reporterSub, shopId, reportType, commodityCode?)`
-If a report was submitted within the last 60 seconds, the API rejects the request with HTTP `429 Too Many Requests` (`COOLDOWN_ACTIVE`).
+
+- Evaluated with millisecond precision against `now.getTime() - 60000` converted to ISO-8601 UTC.
+- A report submitted within the previous 60 seconds (age $< 60.000$s, e.g. 59.999s) is rejected with HTTP `429 Too Many Requests` (`COOLDOWN_ACTIVE`).
+- A report submitted at exactly 60.000s or later (age $\ge 60.000$s, e.g. 60.000s, 60.001s) is permitted.
+- The DynamoDB lookup paginates across all matching candidate records using `LastEvaluatedKey` / `ExclusiveStartKey` with an exclusive lower-bound sort key (`reportKey > REPORT#<cutoff>~`), returning immediately upon finding the first match and failing closed if queries fail.
 
 > **Architectural Note on Concurrency:** Query-before-write in DynamoDB without conditional transaction locks has a narrow race window for simultaneous requests from the same user sub; this is a documented design decision consistent with project constraints and cost controls.
 

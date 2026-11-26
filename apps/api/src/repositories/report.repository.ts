@@ -70,9 +70,13 @@ export class ReportRepository {
   }
 
   /**
-   * P3-05: Checks for a recent report by the same user within a time window.
-   * Leverages sort-key range expression (reportKey >= REPORT#<sinceIsoString>) for efficiency.
-   * Fails closed: if the query throws, callers must not proceed with writes.
+   * P3-05: Checks for a recent report by the same user within the 60-second cooldown window.
+   * Leverages exclusive lower-bound sort-key condition (reportKey > REPORT#<cutoffIso>~) to ensure
+   * reports created exactly at cutoffIso (60.000s ago) or earlier are excluded from matching.
+   * Handles pagination with ExclusiveStartKey / LastEvaluatedKey loop until a matching report is found
+   * or all pages are exhausted.
+   * Returns immediately upon finding the first match.
+   * Fails closed: if any query throws, the error propagates so callers do not proceed with writes.
    *
    * Note on concurrency: Query-before-write in DynamoDB without conditional locks has a narrow
    * race window for simultaneous requests from the same user sub; this is a known architectural
@@ -82,35 +86,46 @@ export class ReportRepository {
     shopId: string,
     reporterSub: string,
     reportType: ReportType,
-    sinceIsoString: string,
+    cutoffIso: string,
     commodityCode?: string
   ): Promise<Report | null> {
-    const minReportKey = `REPORT#${sinceIsoString}`;
-    const command = new QueryCommand({
-      TableName: this.tableName,
-      KeyConditionExpression: 'shopId = :shopId AND reportKey >= :minReportKey',
-      ExpressionAttributeValues: {
-        ':shopId': shopId,
-        ':minReportKey': minReportKey,
-      },
-      ScanIndexForward: false,
-    });
+    const minReportKey = `REPORT#${cutoffIso}~`;
+    let exclusiveStartKey: Record<string, unknown> | undefined = undefined;
 
-    const response = await this.docClient.send(command);
-    const items = (response.Items as Report[]) || [];
+    do {
+      const command = new QueryCommand({
+        TableName: this.tableName,
+        KeyConditionExpression: 'shopId = :shopId AND reportKey > :minReportKey',
+        ExpressionAttributeValues: {
+          ':shopId': shopId,
+          ':minReportKey': minReportKey,
+        },
+        ScanIndexForward: false, // Descending order (newest first)
+        ...(exclusiveStartKey ? { ExclusiveStartKey: exclusiveStartKey } : {}),
+      });
 
-    for (const item of items) {
-      if (item.reporterSub === reporterSub && item.reportType === reportType) {
-        if (reportType === ReportType.STOCK) {
-          const stockPayload = item.payload as StockPayload;
-          if (stockPayload && stockPayload.commodityCode === commodityCode) {
+      const response = await this.docClient.send(command);
+      const items = (response.Items as Report[]) || [];
+
+      for (const item of items) {
+        if (
+          item.createdAt > cutoffIso &&
+          item.reporterSub === reporterSub &&
+          item.reportType === reportType
+        ) {
+          if (reportType === ReportType.STOCK) {
+            const stockPayload = item.payload as StockPayload;
+            if (stockPayload && stockPayload.commodityCode === commodityCode) {
+              return item;
+            }
+          } else {
             return item;
           }
-        } else {
-          return item;
         }
       }
-    }
+
+      exclusiveStartKey = response.LastEvaluatedKey as Record<string, unknown> | undefined;
+    } while (exclusiveStartKey);
 
     return null;
   }

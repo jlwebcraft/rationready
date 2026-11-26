@@ -118,21 +118,22 @@ describe('ReportingService (Trust & Freshness Engine)', () => {
       expect(mockReportRepo.createReport).not.toHaveBeenCalled();
     });
 
-    it('P3-05: throws 429 COOLDOWN_ACTIVE when a duplicate report occurs within 60 seconds', async () => {
+    it('P3-05: throws 429 COOLDOWN_ACTIVE when a duplicate report occurs within 60 seconds (59.999s ago)', async () => {
       vi.mocked(mockShopRepo.getShopById).mockResolvedValueOnce(mockShop);
-      const existingReport: Report = {
+      // Report submitted 59.999 seconds ago
+      const recentReport59s: Report = {
         shopId: 'shop-001',
-        reportKey: createReportKey('2026-11-26T11:59:30.000Z', 'rep-prev'),
-        reportId: 'rep-prev',
+        reportKey: createReportKey('2026-11-26T11:59:00.001Z', 'rep-59s'),
+        reportId: 'rep-59s',
         reportType: ReportType.QUEUE,
-        createdAt: '2026-11-26T11:59:30.000Z',
+        createdAt: '2026-11-26T11:59:00.001Z',
         expiresAt: fixedNowEpoch + 7200,
         reporterSub: 'user-sub-1',
         reporterRole: UserRole.BENEFICIARY,
         payload: { waitMinutes: 15 },
         isDemoData: false,
       };
-      vi.mocked(mockReportRepo.findRecentUserReport).mockResolvedValueOnce(existingReport);
+      vi.mocked(mockReportRepo.findRecentUserReport).mockResolvedValueOnce(recentReport59s);
 
       await expect(
         service.submitReport(
@@ -146,6 +147,48 @@ describe('ReportingService (Trust & Freshness Engine)', () => {
         code: 'COOLDOWN_ACTIVE',
       });
       expect(mockReportRepo.createReport).not.toHaveBeenCalled();
+    });
+
+    it('P3-05: permits report submission when previous report was exactly 60.000 seconds ago', async () => {
+      vi.mocked(mockShopRepo.getShopById).mockResolvedValueOnce(mockShop);
+      // Repository returns null because reports at or before cutoff (60.000s) are not matching active cooldown
+      vi.mocked(mockReportRepo.findRecentUserReport).mockResolvedValueOnce(null);
+
+      const result = await service.submitReport(
+        'shop-001',
+        { reportType: ReportType.QUEUE, payload: { waitMinutes: 20 } },
+        'user-sub-1',
+        UserRole.BENEFICIARY
+      );
+
+      expect(result).toBeDefined();
+      expect(result.shopId).toBe('shop-001');
+      expect(mockReportRepo.createReport).toHaveBeenCalledTimes(1);
+
+      // Verify the cutoff passed to repository had millisecond precision (exactly now - 60000ms)
+      const expectedCutoff = new Date(fixedNow.getTime() - 60000).toISOString(); // '2026-11-26T11:59:00.000Z'
+      expect(mockReportRepo.findRecentUserReport).toHaveBeenCalledWith(
+        'shop-001',
+        'user-sub-1',
+        ReportType.QUEUE,
+        expectedCutoff,
+        undefined
+      );
+    });
+
+    it('P3-05: permits report submission when previous report was 60.001 seconds ago', async () => {
+      vi.mocked(mockShopRepo.getShopById).mockResolvedValueOnce(mockShop);
+      vi.mocked(mockReportRepo.findRecentUserReport).mockResolvedValueOnce(null);
+
+      const result = await service.submitReport(
+        'shop-001',
+        { reportType: ReportType.QUEUE, payload: { waitMinutes: 20 } },
+        'user-sub-1',
+        UserRole.BENEFICIARY
+      );
+
+      expect(result).toBeDefined();
+      expect(mockReportRepo.createReport).toHaveBeenCalledTimes(1);
     });
 
     it('fails closed (throws) if recent report lookup in DynamoDB fails', async () => {
@@ -237,6 +280,85 @@ describe('ReportingService (Trust & Freshness Engine)', () => {
       expect(status.queue.waitMinutes).toBe(20);
       expect(status.queue.latestReportAt).toBe('2026-11-26T11:45:00.000Z');
       expect(status.queue.ageSeconds).toBe(15 * 60); // 900 seconds
+    });
+
+    it('P3-10: strictly filters out reports where expiresAt exactly equals current epoch (expiresAt === fixedNowEpoch)', async () => {
+      vi.mocked(mockShopRepo.getShopById).mockResolvedValueOnce(mockShop);
+
+      // Report whose expiresAt is exactly equal to now (fixedNowEpoch)
+      const exactExpiryReport: Report = {
+        shopId: 'shop-001',
+        reportKey: createReportKey('2026-11-26T10:00:00.000Z', 'rep-exact-exp'),
+        reportId: 'rep-exact-exp',
+        reportType: ReportType.QUEUE,
+        createdAt: '2026-11-26T10:00:00.000Z',
+        expiresAt: fixedNowEpoch, // Exactly equal to nowEpochSeconds
+        reporterSub: 'user-sub-exact-exp',
+        reporterRole: UserRole.SHOP_MANAGER,
+        payload: { waitMinutes: 120 },
+        isDemoData: false,
+      };
+
+      vi.mocked(mockReportRepo.getAllReportsByShopId).mockResolvedValueOnce([exactExpiryReport]);
+
+      const status = await service.getShopStatus('shop-001');
+
+      // Verify that the report is strictly excluded and does not contribute to:
+      // 1. Aggregate values (remains UNKNOWN, not 120)
+      expect(status.queue.waitMinutes).toBe('UNKNOWN');
+      // 2. Distinct reporter count (remains 0)
+      expect(status.queue.distinctReporterCount).toBe(0);
+      // 3. Confidence (remains LOW)
+      expect(status.queue.confidence).toBe(ConfidenceLevel.LOW);
+      // 4. Latest-report timestamps (remains null)
+      expect(status.queue.latestReportAt).toBeNull();
+      expect(status.queue.ageSeconds).toBeNull();
+      // 5. Source labels (remains empty, does not include 'Shop manager update')
+      expect(status.queue.sources).toEqual([]);
+    });
+
+    it('P3-10: ensures an expired boundary report (expiresAt === fixedNowEpoch) does not pollute fresh reports', async () => {
+      vi.mocked(mockShopRepo.getShopById).mockResolvedValueOnce(mockShop);
+
+      const exactExpiryReport: Report = {
+        shopId: 'shop-001',
+        reportKey: createReportKey('2026-11-26T10:00:00.000Z', 'rep-exact-exp'),
+        reportId: 'rep-exact-exp',
+        reportType: ReportType.QUEUE,
+        createdAt: '2026-11-26T10:00:00.000Z',
+        expiresAt: fixedNowEpoch, // Expired at boundary
+        reporterSub: 'user-sub-exact-exp',
+        reporterRole: UserRole.SHOP_MANAGER,
+        payload: { waitMinutes: 120 }, // If included, would distort median from 20 to 70
+        isDemoData: false,
+      };
+
+      const freshReport: Report = {
+        shopId: 'shop-001',
+        reportKey: createReportKey('2026-11-26T11:55:00.000Z', 'rep-fresh'),
+        reportId: 'rep-fresh',
+        reportType: ReportType.QUEUE,
+        createdAt: '2026-11-26T11:55:00.000Z',
+        expiresAt: fixedNowEpoch + 3600, // Valid
+        reporterSub: 'user-sub-fresh',
+        reporterRole: UserRole.BENEFICIARY,
+        payload: { waitMinutes: 20 },
+        isDemoData: false,
+      };
+
+      vi.mocked(mockReportRepo.getAllReportsByShopId).mockResolvedValueOnce([
+        exactExpiryReport,
+        freshReport,
+      ]);
+
+      const status = await service.getShopStatus('shop-001');
+
+      // The exact-expiry report must not contribute to any metric
+      expect(status.queue.waitMinutes).toBe(20);
+      expect(status.queue.distinctReporterCount).toBe(1);
+      expect(status.queue.confidence).toBe(ConfidenceLevel.LOW);
+      expect(status.queue.latestReportAt).toBe('2026-11-26T11:55:00.000Z');
+      expect(status.queue.sources).toEqual(['Community report']);
     });
 
     it('P3-06: deduplicates multiple reports from the same user sub keeping the newest', async () => {

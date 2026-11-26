@@ -68,10 +68,8 @@ export class ReportingService {
     const createdAt = now.toISOString();
 
     // 2. Enforce 60-second duplicate cooldown protection (P3-05)
-    // Cooldown is calculated per (reporterSub, shopId, reportType, commodityCode?)
-    const cooldownSinceIso = new Date(
-      (nowEpochSeconds - REPORT_COOLDOWN_SECONDS) * 1000
-    ).toISOString();
+    // Cutoff calculated with millisecond precision: now.getTime() - REPORT_COOLDOWN_SECONDS * 1000
+    const cutoffIso = new Date(now.getTime() - REPORT_COOLDOWN_SECONDS * 1000).toISOString();
     const commodityCode =
       input.reportType === ReportType.STOCK
         ? (input.payload as StockPayload).commodityCode
@@ -82,7 +80,7 @@ export class ReportingService {
       shopId,
       reporterSub,
       input.reportType,
-      cooldownSinceIso,
+      cutoffIso,
       commodityCode
     );
 

@@ -106,62 +106,200 @@ describe('ReportRepository', () => {
     });
   });
 
-  describe('P3-05: findRecentUserReport (Duplicate Cooldown Lookup)', () => {
-    it('finds recent report by matching reporterSub and reportType within the time window', async () => {
+  describe('P3-05: findRecentUserReport (Duplicate Cooldown Lookup & Pagination)', () => {
+    const cutoff = '2026-11-26T12:00:00.000Z';
+
+    it('finds matching report on the first page and returns immediately without requesting further pages', async () => {
+      const matchingReport: Report = {
+        ...mockReport,
+        createdAt: '2026-11-26T12:00:30.000Z',
+        reportKey: createReportKey('2026-11-26T12:00:30.000Z', 'rep-001'),
+      };
+
       mockSend.mockResolvedValueOnce({
-        Items: [mockReport],
+        Items: [matchingReport],
+        LastEvaluatedKey: { shopId: 'demo-shop-001', reportKey: matchingReport.reportKey },
       });
 
       const result = await repo.findRecentUserReport(
         'demo-shop-001',
         'demo-reporter-1',
         ReportType.EPOS,
-        '2026-11-24T09:59:00.000Z'
+        cutoff
       );
 
       expect(mockSend).toHaveBeenCalledTimes(1);
       const callArg = mockSend.mock.calls[0][0];
       expect(callArg.input.KeyConditionExpression).toBe(
-        'shopId = :shopId AND reportKey >= :minReportKey'
+        'shopId = :shopId AND reportKey > :minReportKey'
       );
       expect(callArg.input.ExpressionAttributeValues).toEqual({
         ':shopId': 'demo-shop-001',
-        ':minReportKey': 'REPORT#2026-11-24T09:59:00.000Z',
+        ':minReportKey': `REPORT#${cutoff}~`,
       });
-      expect(result).toEqual(mockReport);
+      expect(result).toEqual(matchingReport);
     });
 
-    it('returns null if matching user or reportType is not present in recent results', async () => {
+    it('finds matching report on a later page after searching previous pages', async () => {
+      const otherUserReport: Report = {
+        ...mockReport,
+        reporterSub: 'other-user',
+        createdAt: '2026-11-26T12:00:45.000Z',
+        reportKey: createReportKey('2026-11-26T12:00:45.000Z', 'rep-other'),
+      };
+
+      const matchingReportOnPage2: Report = {
+        ...mockReport,
+        createdAt: '2026-11-26T12:00:15.000Z',
+        reportKey: createReportKey('2026-11-26T12:00:15.000Z', 'rep-match-page2'),
+      };
+
+      // Page 1: only other users
       mockSend.mockResolvedValueOnce({
-        Items: [mockReport],
+        Items: [otherUserReport],
+        LastEvaluatedKey: { shopId: 'demo-shop-001', reportKey: otherUserReport.reportKey },
+      });
+      // Page 2: contains the matching report
+      mockSend.mockResolvedValueOnce({
+        Items: [matchingReportOnPage2],
+        LastEvaluatedKey: undefined,
       });
 
-      // Different user
-      const resultUser = await repo.findRecentUserReport(
-        'demo-shop-001',
-        'different-user',
-        ReportType.EPOS,
-        '2026-11-24T09:59:00.000Z'
-      );
-      expect(resultUser).toBeNull();
-
-      // Different reportType
-      mockSend.mockResolvedValueOnce({
-        Items: [mockReport],
-      });
-      const resultType = await repo.findRecentUserReport(
+      const result = await repo.findRecentUserReport(
         'demo-shop-001',
         'demo-reporter-1',
-        ReportType.QUEUE,
-        '2026-11-24T09:59:00.000Z'
+        ReportType.EPOS,
+        cutoff
       );
-      expect(resultType).toBeNull();
+
+      expect(mockSend).toHaveBeenCalledTimes(2);
+      expect(result).toEqual(matchingReportOnPage2);
+
+      // Verify second call passed ExclusiveStartKey from page 1
+      const secondCallArg = mockSend.mock.calls[1][0];
+      expect(secondCallArg.input.ExclusiveStartKey).toEqual({
+        shopId: 'demo-shop-001',
+        reportKey: otherUserReport.reportKey,
+      });
+    });
+
+    it('returns null when no matching report exists across multiple pages', async () => {
+      const otherUserReport1: Report = {
+        ...mockReport,
+        reporterSub: 'other-user-1',
+        createdAt: '2026-11-26T12:00:45.000Z',
+        reportKey: createReportKey('2026-11-26T12:00:45.000Z', 'rep-o1'),
+      };
+      const otherUserReport2: Report = {
+        ...mockReport,
+        reporterSub: 'other-user-2',
+        createdAt: '2026-11-26T12:00:20.000Z',
+        reportKey: createReportKey('2026-11-26T12:00:20.000Z', 'rep-o2'),
+      };
+
+      // Page 1
+      mockSend.mockResolvedValueOnce({
+        Items: [otherUserReport1],
+        LastEvaluatedKey: { shopId: 'demo-shop-001', reportKey: otherUserReport1.reportKey },
+      });
+      // Page 2
+      mockSend.mockResolvedValueOnce({
+        Items: [otherUserReport2],
+        LastEvaluatedKey: undefined,
+      });
+
+      const result = await repo.findRecentUserReport(
+        'demo-shop-001',
+        'demo-reporter-1',
+        ReportType.EPOS,
+        cutoff
+      );
+
+      expect(mockSend).toHaveBeenCalledTimes(2);
+      expect(result).toBeNull();
+    });
+
+    it('propagates DynamoDB query errors so callers can fail closed', async () => {
+      mockSend.mockRejectedValueOnce(new Error('DynamoDB socket timeout'));
+
+      await expect(
+        repo.findRecentUserReport('demo-shop-001', 'demo-reporter-1', ReportType.EPOS, cutoff)
+      ).rejects.toThrow('DynamoDB socket timeout');
+    });
+
+    describe('Exact 60-second boundary behavior', () => {
+      // Cutoff is exactly 2026-11-26T12:00:00.000Z
+      it('matches and rejects when report age is 59.999 seconds (createdAt = cutoff + 1ms)', async () => {
+        const report59s: Report = {
+          ...mockReport,
+          createdAt: '2026-11-26T12:00:00.001Z',
+          reportKey: createReportKey('2026-11-26T12:00:00.001Z', 'rep-59s'),
+        };
+
+        mockSend.mockResolvedValueOnce({
+          Items: [report59s],
+        });
+
+        const result = await repo.findRecentUserReport(
+          'demo-shop-001',
+          'demo-reporter-1',
+          ReportType.EPOS,
+          cutoff
+        );
+
+        expect(result).toEqual(report59s);
+      });
+
+      it('does not match when report age is exactly 60.000 seconds (createdAt === cutoff)', async () => {
+        const report60s: Report = {
+          ...mockReport,
+          createdAt: cutoff, // Exactly equal to cutoff
+          reportKey: createReportKey(cutoff, 'rep-60s'),
+        };
+
+        // Note: Even if DynamoDB were to return it, the in-memory check excludes it
+        mockSend.mockResolvedValueOnce({
+          Items: [report60s],
+        });
+
+        const result = await repo.findRecentUserReport(
+          'demo-shop-001',
+          'demo-reporter-1',
+          ReportType.EPOS,
+          cutoff
+        );
+
+        expect(result).toBeNull();
+      });
+
+      it('does not match when report age is 60.001 seconds (createdAt < cutoff)', async () => {
+        const report60s1ms: Report = {
+          ...mockReport,
+          createdAt: '2026-11-26T11:59:59.999Z',
+          reportKey: createReportKey('2026-11-26T11:59:59.999Z', 'rep-60s1ms'),
+        };
+
+        mockSend.mockResolvedValueOnce({
+          Items: [report60s1ms],
+        });
+
+        const result = await repo.findRecentUserReport(
+          'demo-shop-001',
+          'demo-reporter-1',
+          ReportType.EPOS,
+          cutoff
+        );
+
+        expect(result).toBeNull();
+      });
     });
 
     it('differentiates stock commodities during cooldown check', async () => {
       const riceReport: Report = {
         ...mockReport,
         reportType: ReportType.STOCK,
+        createdAt: '2026-11-26T12:00:30.000Z',
+        reportKey: createReportKey('2026-11-26T12:00:30.000Z', 'rep-rice'),
         payload: { commodityCode: 'RICE', availability: CommodityAvailability.AVAILABLE },
       };
 
@@ -171,7 +309,7 @@ describe('ReportRepository', () => {
         'demo-shop-001',
         'demo-reporter-1',
         ReportType.STOCK,
-        '2026-11-24T09:59:00.000Z',
+        cutoff,
         'RICE'
       );
       expect(foundRice).toEqual(riceReport);

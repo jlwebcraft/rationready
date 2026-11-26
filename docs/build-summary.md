@@ -24,12 +24,12 @@
   - `validateReport`: Complete entity schema validation before DynamoDB persistence.
 - **Data Access Layer (`apps/api/src/repositories/report.repository.ts`):**
   - `getAllReportsByShopId`: Implements DynamoDB query pagination looping with `ExclusiveStartKey` until `LastEvaluatedKey` is undefined, returning full descending item history (`P3-10`).
-  - `findRecentUserReport`: Queries recent reports for a shop within the cooldown window using sort key range conditions (`reportKey >= REPORT#<sinceIso>`) to enforce per-user rate limits (`P3-05`). Fails closed if the database operation fails.
+  - `findRecentUserReport`: Queries recent reports for a shop within the cooldown window using an exclusive lower-bound sort key condition (`reportKey > REPORT#<cutoffIso>~`) and pagination loop (`LastEvaluatedKey` / `ExclusiveStartKey`) to enforce per-user rate limits (`P3-05`), returning immediately upon match and excluding reports created at or before cutoff. Fails closed if any query fails.
   - _Concurrency Notice:_ Query-before-write in DynamoDB without conditional transaction locks has a narrow race window for simultaneous requests from the same user sub; documented in accordance with project constraints.
 - **Trust & Freshness Engine (`apps/api/src/services/reporting.service.ts`):**
   - Server-side timestamping (`createdAt` ISO-8601 UTC) and epoch second expiry calculations (`P3-04`).
-  - 60-second cooldown verification across `(reporterSub, shopId, reportType, commodityCode?)` (`P3-05`).
-  - Stale report exclusion: Reports with `expiresAt <= nowEpochSeconds` are filtered out before aggregation even if DynamoDB TTL has not yet deleted them (`P3-10`).
+  - 60-second cooldown verification across `(reporterSub, shopId, reportType, commodityCode?)` evaluated with millisecond precision against `now.getTime() - 60000` (`P3-05`).
+  - Stale report exclusion: Reports with `expiresAt <= nowEpochSeconds` (including exact boundary `expiresAt === nowEpochSeconds`) are strictly filtered out before aggregation even if DynamoDB TTL has not yet deleted them (`P3-10`).
   - Single-user deduplication: Groups valid reports by user sub per category and preserves only the newest submission (`P3-06`).
   - Queue calculation: Computes median wait time across deduplicated reports and rounds to the nearest 5 minutes (`P3-06`).
   - ePOS calculation: Enforces strict majority ($> 50\%$) between `WORKING` and `NOT_WORKING`; splits and ties yield `'MIXED REPORTS'` (`P3-07`).

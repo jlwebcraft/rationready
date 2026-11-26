@@ -2,30 +2,30 @@
 
 > **Status:** Phase 3 Reporting, Freshness & Trust Engine Verification  
 > **Framework:** Vitest 2.1.9 across monorepo workspaces  
-> **Pass Rate:** 100% (136 / 136 tests passing)
+> **Pass Rate:** 100% (145 / 145 tests passing)
 
 ---
 
 ## 1. Test Execution Summary
 
-A total of **136 automated unit tests** run across the monorepo via Vitest, achieving a 100% pass rate with zero flaky tests or mock leaks.
+A total of **145 automated unit tests** run across the monorepo via Vitest, achieving a 100% pass rate with zero flaky tests or mock leaks.
 
-| Workspace          | Test Suite                                        | Tests         | Status         | Scope                                                     |
-| ------------------ | ------------------------------------------------- | ------------- | -------------- | --------------------------------------------------------- |
-| `@rationready/api` | `tests/health.test.ts`                            | 2             | Passed         | Health check endpoint & runtime environment               |
-| `@rationready/api` | `tests/shop.validator.test.ts`                    | 13            | Passed         | Shop ID & locality validation rules                       |
-| `@rationready/api` | `tests/report.validator.test.ts`                  | 17            | Passed         | Queue (0–180), ePOS, Stock (RICE pilot), client security  |
-| `@rationready/api` | `tests/shop.repository.test.ts`                   | 5             | Passed         | DynamoDB Shops CRUD & locality queries                    |
-| `@rationready/api` | `tests/report.repository.test.ts`                 | 7             | Passed         | Reports persistence, pagination loops, cooldown queries   |
-| `@rationready/api` | `tests/shops.handler.test.ts`                     | 10            | Passed         | Shop directory endpoints & error formatting               |
-| `@rationready/api` | `tests/reporting.service.test.ts`                 | 21            | Passed         | Medians, majorities, confidence tiers, cooldown, expiry   |
-| `@rationready/api` | `tests/reports.handler.test.ts`                   | 16            | Passed         | Fail-closed auth, submit reports, status queries          |
-| `@rationready/api` | `tests/seed-demo-data.test.ts`                    | 15            | Passed         | Seed generation, repeatable timestamps, dry-run safety    |
-| `@rationready/web` | `src/components/__tests__/Shell.test.tsx`         | 6             | Passed         | Header, navigation, footer, responsive states             |
-| `@rationready/web` | `src/features/shops/__tests__/env-config.test.ts` | 2             | Passed         | Vite root env configuration & prefix boundary             |
-| `@rationready/web` | `src/features/shops/__tests__/api.test.ts`        | 12            | Passed         | API client fetching, local demo mode, HTTP error handling |
-| `@rationready/web` | `src/features/shops/__tests__/Shops.test.tsx`     | 10            | Passed         | Shop list, filters, shop detail, not-found views          |
-| **Total**          | **13 suites**                                     | **136 tests** | **All Passed** | **Monorepo Suite**                                        |
+| Workspace          | Test Suite                                        | Tests         | Status         | Scope                                                                                            |
+| ------------------ | ------------------------------------------------- | ------------- | -------------- | ------------------------------------------------------------------------------------------------ |
+| `@rationready/api` | `tests/health.test.ts`                            | 2             | Passed         | Health check endpoint & runtime environment                                                      |
+| `@rationready/api` | `tests/shop.validator.test.ts`                    | 13            | Passed         | Shop ID & locality validation rules                                                              |
+| `@rationready/api` | `tests/report.validator.test.ts`                  | 17            | Passed         | Queue (0–180), ePOS, Stock (RICE pilot allowlist), client security                               |
+| `@rationready/api` | `tests/shop.repository.test.ts`                   | 5             | Passed         | DynamoDB Shops CRUD & locality queries                                                           |
+| `@rationready/api` | `tests/report.repository.test.ts`                 | 12            | Passed         | Reports persistence, multi-page pagination, cooldown lookup pagination, 60s boundary             |
+| `@rationready/api` | `tests/shops.handler.test.ts`                     | 10            | Passed         | Shop directory endpoints & error formatting                                                      |
+| `@rationready/api` | `tests/reporting.service.test.ts`                 | 25            | Passed         | Medians, majorities, confidence tiers, millisecond-precision 60s cooldown, exact expiry boundary |
+| `@rationready/api` | `tests/reports.handler.test.ts`                   | 16            | Passed         | Fail-closed auth, submit reports, status queries                                                 |
+| `@rationready/api` | `tests/seed-demo-data.test.ts`                    | 15            | Passed         | Seed generation, repeatable timestamps, dry-run safety                                           |
+| `@rationready/web` | `src/components/__tests__/Shell.test.tsx`         | 6             | Passed         | Header, navigation, footer, responsive states                                                    |
+| `@rationready/web` | `src/features/shops/__tests__/env-config.test.ts` | 2             | Passed         | Vite root env configuration & prefix boundary                                                    |
+| `@rationready/web` | `src/features/shops/__tests__/api.test.ts`        | 12            | Passed         | API client fetching, local demo mode, HTTP error handling                                        |
+| `@rationready/web` | `src/features/shops/__tests__/Shops.test.tsx`     | 10            | Passed         | Shop list, filters, shop detail, not-found views                                                 |
+| **Total**          | **13 suites**                                     | **145 tests** | **All Passed** | **Monorepo Suite**                                                                               |
 
 ---
 
@@ -35,26 +35,38 @@ A total of **136 automated unit tests** run across the monorepo via Vitest, achi
 
 - **Queue Payload (`P3-01`):** Validates integer constraints between 0 and 180 inclusive (testing boundaries 0, 45, 180); rejects negative values (-1), values exceeding 180 (181), floating-point decimals (15.5), strings, null, undefined, and non-object inputs.
 - **ePOS Payload (`P3-02`):** Validates `WORKING` and `NOT_WORKING`; rejects invalid strings, casing variations (`working`), and non-string inputs.
-- **Stock Payload (`P3-03`):** Validates pilot commodity restriction strictly to `RICE` with `AVAILABLE`, `LIMITED`, and `UNAVAILABLE`; asserts non-pilot commodities (`WHEAT`, `SUGAR`, `KEROSENE`) return descriptive errors; rejects invalid availability values.
+- **Stock Payload (`P3-03`):** Validates pilot commodity restriction strictly to `RICE` with `AVAILABLE`, `LIMITED`, and `UNAVAILABLE`; asserts non-pilot commodities (`WHEAT`, `SUGAR`, `KEROSENE`) return descriptive validation errors; rejects invalid availability values.
 - **Client Submission Security (`validateSubmitReportInput`):** Confirms valid payloads pass; asserts client attempts to inject server-controlled fields (`reportId`, `reporterSub`, `reporterRole`, `createdAt`, `expiresAt`, `isDemoData`, `shopId`, `reportKey`) are rejected.
 - **Database Entity Validation (`validateReport`):** Asserts sound `Report` entities validate, and catches missing or malformed keys, invalid timestamp formats, or negative TTL epoch values.
 
-### 2.2 Report Data Access Layer (`report.repository.test.ts` — 7 tests)
+### 2.2 Report Data Access Layer (`report.repository.test.ts` — 11 tests)
 
 - **Persistence:** Verifies `createReport` issues `PutCommand` with correct table name and entity.
 - **Querying:** Verifies `getReportsByShopId` issues descending sort-key query (`ScanIndexForward: false`).
 - **Pagination Loop (`P3-10`):** Simulates multi-page DynamoDB responses, verifying the repository continues querying with `ExclusiveStartKey` until `LastEvaluatedKey` is undefined, accumulating all records.
-- **Cooldown Lookups (`P3-05`):** Tests `findRecentUserReport` using sort key range expressions (`reportKey >= REPORT#<sinceIso>`); verifies differentiation across user subs, report types, and stock commodities.
+- **Cooldown Lookup Pagination & Matching (`P3-05`):**
+  - Verifies finding a matching report on the first page returns immediately without requesting subsequent pages.
+  - Verifies finding a matching report on a later page (page 2) correctly paginates with `ExclusiveStartKey`.
+  - Verifies traversing multiple pages without a match exhausts all pages and returns `null`.
+  - Verifies query errors propagate directly so callers fail closed.
+  - Verifies differentiation across user subs, report types, and stock commodities.
+- **Exact 60-Second Boundary Verification:**
+  - Previous report age 59.999 seconds (`createdAt = cutoff + 1ms`): matched by exclusive lower bound sort key condition (`reportKey > REPORT#<cutoff>~`).
+  - Previous report age 60.000 seconds (`createdAt = cutoff`): excluded (returns `null`).
+  - Previous report age 60.001 seconds (`createdAt < cutoff`): excluded (returns `null`).
 
-### 2.3 Trust & Freshness Engine (`reporting.service.test.ts` — 21 tests)
+### 2.3 Trust & Freshness Engine (`reporting.service.test.ts` — 25 tests)
 
-- **Submit Report:**
+- **Submit Report & 60-Second Cooldown:**
   - Verifies 404 `SHOP_NOT_FOUND` when target shop does not exist.
   - Verifies server-generated metadata: UUID `reportId`, UTC ISO `createdAt`, `isDemoData: false`, and exact TTL calculations (`QUEUE: +7200s`, `EPOS: +14400s`, `STOCK: +86400s`).
-  - Verifies 429 `COOLDOWN_ACTIVE` when a user attempts duplicate submission within 60 seconds (`P3-05`).
+  - Verifies 429 `COOLDOWN_ACTIVE` when a report was submitted 59.999 seconds ago (`P3-05`).
+  - Verifies report submission is permitted when the previous report was submitted exactly 60.000 seconds ago or earlier (60.001s).
   - Verifies fail-closed behavior if DynamoDB query throws during cooldown check.
 - **Freshness & Deduplication:**
-  - Verifies reports with `expiresAt <= nowEpochSeconds` are strictly excluded from aggregation (`P3-10`).
+  - Verifies reports with `expiresAt < nowEpochSeconds` are excluded from aggregation (`P3-10`).
+  - **Exact Expiry Boundary (`expiresAt === nowEpochSeconds`):** Strictly verified to be excluded from aggregation. Confirms that a report expiring at the exact current second does not contribute to aggregate values, reporter count, confidence, latestReportAt timestamp, or source labels.
+  - Verifies an expired boundary report does not pollute or distort fresh report aggregations.
   - Verifies single-user deduplication preserves only the newest report per user sub for each category (`P3-06`).
 - **Queue Status (`P3-06`, `P3-09`):**
   - Odd report counts: Computes exact median and rounds to nearest 5 minutes.
@@ -66,8 +78,10 @@ A total of **136 automated unit tests** run across the monorepo via Vitest, achi
   - Majority $\ge 75\%$ (e.g., 3-1) $\rightarrow$ `WORKING` with `HIGH` confidence.
   - Strict majority $< 75\%$ (e.g., 3-2) $\rightarrow$ `WORKING` with `MEDIUM` confidence.
 - **Stock Status (`P3-08`, `P3-09`):**
+  - Pilot allowlist strictly tested for `RICE`.
   - Unanimous consensus $\rightarrow$ `AVAILABLE` with `HIGH` confidence.
   - 3-way split (1 available, 1 limited, 1 unavailable) $\rightarrow$ `'MIXED REPORTS'` with `MIXED` confidence.
+  - _Multiple-Commodity Scope Note:_ In accordance with the approved pilot boundary, only the single pilot commodity (`RICE`) is active. Multi-commodity aggregation is not claimed as tested; see Blocker `BLK-08` in `docs/decisions-and-blockers.md` and pending item `P3-13` in `RATIONREADY_ROADMAP.md`.
 - **Source Provenance (`P3-09`):**
   - Beneficiary submissions map to `'Community report'`.
   - Shop manager submissions map to `'Shop manager update'`.

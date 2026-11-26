@@ -341,7 +341,7 @@ Dates are in IST. This is a deadline-led plan. Required MVP work takes priority 
 - [x] `P3-10` Ensure expired reports are excluded by backend logic even before DynamoDB TTL removes them.
 - [x] `P3-11` Create the protected `POST /shops/{shopId}/reports` API endpoint.
 - [x] `P3-12` Create the public `GET /shops/{shopId}/status` API endpoint for aggregated current information.
-- [x] `P3-13` Add unit tests for expiry boundaries, medians, ties, multiple commodities, duplicate reporters, and confidence labels.
+- [ ] `P3-13` Add unit tests for expiry boundaries, medians, ties, multiple commodities, duplicate reporters, and confidence labels.
 - [x] `P3-14` Document the API request/response contract in `docs/api-contract.md`.
 - [ ] `P3-15` Commit and create Git tag `v0.3-reporting-engine` after tests pass.
 
