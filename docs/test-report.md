@@ -39,7 +39,7 @@ A total of **145 automated unit tests** run across the monorepo via Vitest, achi
 - **Client Submission Security (`validateSubmitReportInput`):** Confirms valid payloads pass; asserts client attempts to inject server-controlled fields (`reportId`, `reporterSub`, `reporterRole`, `createdAt`, `expiresAt`, `isDemoData`, `shopId`, `reportKey`) are rejected.
 - **Database Entity Validation (`validateReport`):** Asserts sound `Report` entities validate, and catches missing or malformed keys, invalid timestamp formats, or negative TTL epoch values.
 
-### 2.2 Report Data Access Layer (`report.repository.test.ts` — 11 tests)
+### 2.2 Report Data Access Layer (`report.repository.test.ts` — 12 tests)
 
 - **Persistence:** Verifies `createReport` issues `PutCommand` with correct table name and entity.
 - **Querying:** Verifies `getReportsByShopId` issues descending sort-key query (`ScanIndexForward: false`).
