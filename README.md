@@ -2,7 +2,7 @@
 
 > **Project:** RationReady  
 > **Competition:** Techfest 2026–27 — Campus to Cloud Hackathon sponsored by AWS  
-> **Status:** Phase 1 — Foundation implementation under technical review.  
+> **Status:** Phase 2 — Shop Directory & Data Layer implementation under review.  
 > **Repository:** [https://github.com/jlwebcraft/rationready](https://github.com/jlwebcraft/rationready)
 
 ---
@@ -111,6 +111,8 @@ rationready/
    cp .env.example .env
    ```
 
+   Vite loads environment variables from the repository root `.env` (`envDir` configured in `apps/web/vite.config.ts`) and only exposes `VITE_`-prefixed keys to browser code. By default, `.env.example` leaves `VITE_API_URL=` blank so the frontend displays local synthetic demonstration shops without requiring a running backend server. To connect to a deployed shop API, set `VITE_API_URL` to its base URL (if configured and unreachable, the UI displays an error state rather than silently falling back to demo data).
+
 4. **Start the frontend development server:**
 
    ```bash
@@ -119,9 +121,16 @@ rationready/
    ```
 
 5. **Build all applications:**
+
    ```bash
    npm run build
    ```
+
+6. **Demo data seed script (dry-run by default):**
+   ```bash
+   npx tsx scripts/seed-demo-data.ts
+   ```
+   Defaults to safe dry-run mode (zero AWS network calls or DynamoDB writes). When writing to provisioned tables (`--execute` with `SHOPS_TABLE`, `REPORTS_TABLE`, and `AWS_REGION`), pass `--timestamp=<UTC-ISO-8601>` to pin timestamps and `reportKey` values; after any partial failure, re-run with the printed `--timestamp=...` value for an idempotent retry.
 
 ---
 
@@ -151,9 +160,10 @@ rationready/
 ## 7. Current Development Status
 
 - **Phase 0 (Project Control & Preparation):** In progress (Team Leader `@jlwebcraft` confirmed; synthetic pilot dataset approved; AWS account & budget checks pending human verification).
-- **Phase 1 (Foundation & Application Shell):** Phase 1 — Foundation implementation under technical review.
+- **Phase 1 (Foundation & Application Shell):** Complete and tagged (`v0.1-foundation`).
+- **Phase 2 (Shop Directory & Data Layer):** Complete and under review. Public endpoints `GET /shops` and `GET /shops/{shopId}` implemented with validation (`shopId`: 1–64 alphanumeric, hyphen, underscore characters) and standard envelope, DynamoDB repository layer created, seed script (`scripts/seed-demo-data.ts`) supporting dry-run default and `--execute` DynamoDB writes with repeatable `--timestamp=<UTC>` retry support for 5 fictional demonstration shops and 15 initial reports, responsive frontend directory (root `.env` loaded via Vite `envDir`, blank `VITE_API_URL=` default local demo mode, explicit API error states) and detail views built, and 77 unit tests passing.
 - **Future Phases (Not Yet Started):**
-  - AWS Cloud Deployment (Phase 6): Cloud infrastructure not yet provisioned; scheduled for Phase 6 following AWS budget protection confirmation.
-  - Live API Functionality & DynamoDB Integration: Scheduled for Phase 2 & Phase 3 (including the protected report submission endpoint `POST /shops/{shopId}/reports` under P3-11).
-  - Authentication, Session Integration & JWT Authorizer (Phase 5): Cognito User Pool and role groups are scaffolded in SAM for Phase 1; API Gateway JWT authorizer configuration (P5-04), frontend sign-up/sign-in session handling (P5-05), and backend identity/role derivation from validated JWT claims (P5-06) will be implemented in Phase 5.
-  - Interactive Shop Directory & Reporting Flows: Scheduled for Phase 2 & Phase 4.
+  - Live AWS Cloud Deployment (Phase 6): Cloud infrastructure not yet provisioned; scheduled for Phase 6 following AWS budget protection confirmation.
+  - Reporting, Freshness & Trust Engine (Phase 3): Scheduled for Phase 3 (including `POST /shops/{shopId}/reports` under P3-11 and `GET /shops/{shopId}/status` under P3-12).
+  - Beneficiary Reporting Flows (Phase 4): Scheduled for Phase 4.
+  - Authentication, Session Integration & JWT Authorizer (Phase 5): Cognito User Pool and role groups scaffolded in SAM; API Gateway JWT authorizer configuration (P5-04), frontend sign-up/sign-in session handling (P5-05), and backend identity/role derivation from validated JWT claims (P5-06) will be implemented in Phase 5.

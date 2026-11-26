@@ -28,8 +28,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
       id: 'directory',
       label: 'Shop Directory',
       icon: Store,
-      available: false,
-      phaseBadge: 'Phase 2',
+      available: true,
     },
     {
       id: 'report',
