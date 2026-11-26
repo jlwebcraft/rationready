@@ -50,6 +50,11 @@ The following architectural and technical decisions are defined and locked per `
   - **Scope:** The project owner has explicitly authorised beginning local-only Phase 1 development while Phase 0 administrative and AWS verification tasks remain pending.
   - **Non-Waiver Condition:** Phase 0 remains formally incomplete. Tasks `P0-04` (Builder Center verification), `P0-05` (AWS account verification), and `P0-06` (AWS budget protection) remain pending and are not waived.
   - **Strict Guardrail:** No AWS cloud resources may be provisioned and no cloud deployments may be attempted during local development. AWS account verification and budget alerts must be completed before any Phase 6 infrastructure deployment.
+- **Git Workflow Transition to Main-Only Development (26 November 2026):**
+  - **Authorization:** Authorized explicitly by the project owner (@jlwebcraft).
+  - **Decision:** Transition the repository from the previous branching model (`develop` + `feature/*`) to a `main`-only development workflow.
+  - **Branch Model & Operating Rules:** `main` is the sole active development branch and the GitHub default branch. All future development commits are created directly on `main` and pushed to `origin/main`. No new `develop`, `feature/*`, or `fix/*` branches or routine pull requests will be created for ongoing development. Historical branches (`develop`, `feature/*`) remain preserved for reference but receive no further commits.
+  - **Attribution Objective:** Ensures all eligible project commits are directly recorded on the project owner's GitHub contributions graph while maintaining strict testing, validation, Conventional Commit messages, and documentation requirements.
 
 ---
 

@@ -481,12 +481,10 @@ The Round 1 result announcement is expected by 5 December 2026, according to the
 
 ## Branch model
 
-- `main`: always deployable; no direct feature work.
-- `develop`: integration branch for completed features.
-- `feature/<short-name>`: one feature or fix per branch.
-- `fix/<short-name>`: targeted bug fixes.
-
-Examples: `feature/shop-directory`, `feature/report-aggregation`, `feature/cognito-auth`, `fix/stale-report-filter`.
+- `main` is the sole active development branch and the default branch.
+- All future development commits are made directly on `main`.
+- No new `develop`, `feature/*`, or `fix/*` branches are to be created.
+- Historical branches may remain for reference but must not receive new development work.
 
 ## Commit format
 
@@ -503,27 +501,26 @@ docs: document AWS deployment process
 ## Required Git habits
 
 - Check `git status` before starting and before committing.
-- Pull the latest `develop` before branching.
+- Synchronize with `origin/main` before starting work.
+- Inspect changes before committing.
 - Keep commits small and focused.
-- Run relevant tests before opening/merging a pull request.
-- Merge into `develop` only after review and verification.
-- Merge a tested release from `develop` to `main`.
-- Tag every stable milestone listed in the roadmap.
-- Never force-push shared branches.
-- Prefer `git revert <commit-hash>` to undo a bad shared commit; do not rewrite shared history with `reset --hard`.
+- Run relevant tests before committing.
+- Use Conventional Commit messages.
+- Push completed commits to `origin/main`.
+- Never force-push.
+- Use `git revert` to undo incorrect shared commits.
 - Record the commit hash used for every AWS deployment.
 
 Useful commands:
 
 ```bash
 git status --short
-git switch develop
-git pull --ff-only
-git switch -c feature/shop-directory
+git switch main
+git pull --ff-only origin main
 
 git add .
-git commit -m "feat: add locality-based shop directory"
-git push -u origin feature/shop-directory
+git commit -m "feat: describe implemented change"
+git push origin main
 
 git log --oneline --graph --decorate --all
 git tag --list
