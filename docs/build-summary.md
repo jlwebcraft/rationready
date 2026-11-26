@@ -1,52 +1,60 @@
 # RationReady — Build Summary
 
-> **Status:** Phase 2 Shop Directory & Data Layer Implementation
+> **Status:** Phase 3 Reporting, Freshness & Trust Engine Implementation  
+> **Region:** AWS `ap-south-1` (Asia Pacific - Mumbai)
 
 ---
 
 ## 1. Technologies & Architecture Implemented
 
-- **Frontend:**
+### 1.1 Backend Reporting, Freshness & Trust Engine (Phase 3)
+
+- **Domain Models & Enums (`apps/api/src/domain/types.ts`):**
+  - Report types: `QUEUE`, `EPOS`, `STOCK`.
+  - Pilot commodity constraints: Strictly restricted to `ALLOWED_COMMODITY_CODES = ['RICE']`.
+  - Expiry durations: `QUEUE` (7,200s / 2h), `EPOS` (14,400s / 4h), `STOCK` (86,400s / 24h).
+  - Cooldown window: 60 seconds (`REPORT_COOLDOWN_SECONDS = 60`).
+  - Canonical provenance labels: `'Community report'` (`REPORT_SOURCE_LABELS.COMMUNITY`) and `'Shop manager update'` (`REPORT_SOURCE_LABELS.SHOP_MANAGER`).
+  - Error codes: `UNAUTHORIZED` (401), `FORBIDDEN` (403), `COOLDOWN_ACTIVE` (429), `VALIDATION_ERROR` (400), `SHOP_NOT_FOUND` (404), `METHOD_NOT_ALLOWED` (405).
+- **Backend Validators (`apps/api/src/validators/report.validator.ts`):**
+  - `validateQueuePayload`: Enforces `waitMinutes` as an integer between 0 and 180 inclusive; rejects decimals, negatives, non-numeric values, and out-of-range inputs.
+  - `validateEposPayload`: Enforces status strictly matching `WORKING` or `NOT_WORKING`.
+  - `validateStockPayload`: Enforces commodity code strictly matching pilot allowlist (`RICE`) and availability matching `AVAILABLE`, `LIMITED`, or `UNAVAILABLE`.
+  - `validateSubmitReportInput`: Validates user submission body and enforces security boundaries by rejecting client attempts to supply server-controlled fields (`reportId`, `reporterSub`, `reporterRole`, `createdAt`, `expiresAt`, `isDemoData`, `shopId`, `reportKey`).
+  - `validateReport`: Complete entity schema validation before DynamoDB persistence.
+- **Data Access Layer (`apps/api/src/repositories/report.repository.ts`):**
+  - `getAllReportsByShopId`: Implements DynamoDB query pagination looping with `ExclusiveStartKey` until `LastEvaluatedKey` is undefined, returning full descending item history (`P3-10`).
+  - `findRecentUserReport`: Queries recent reports for a shop within the cooldown window using sort key range conditions (`reportKey >= REPORT#<sinceIso>`) to enforce per-user rate limits (`P3-05`). Fails closed if the database operation fails.
+  - _Concurrency Notice:_ Query-before-write in DynamoDB without conditional transaction locks has a narrow race window for simultaneous requests from the same user sub; documented in accordance with project constraints.
+- **Trust & Freshness Engine (`apps/api/src/services/reporting.service.ts`):**
+  - Server-side timestamping (`createdAt` ISO-8601 UTC) and epoch second expiry calculations (`P3-04`).
+  - 60-second cooldown verification across `(reporterSub, shopId, reportType, commodityCode?)` (`P3-05`).
+  - Stale report exclusion: Reports with `expiresAt <= nowEpochSeconds` are filtered out before aggregation even if DynamoDB TTL has not yet deleted them (`P3-10`).
+  - Single-user deduplication: Groups valid reports by user sub per category and preserves only the newest submission (`P3-06`).
+  - Queue calculation: Computes median wait time across deduplicated reports and rounds to the nearest 5 minutes (`P3-06`).
+  - ePOS calculation: Enforces strict majority ($> 50\%$) between `WORKING` and `NOT_WORKING`; splits and ties yield `'MIXED REPORTS'` (`P3-07`).
+  - Stock calculation: Enforces strict majority per commodity; splits yield `'MIXED REPORTS'` (`P3-08`).
+  - Confidence tiers: Computes `LOW`, `MEDIUM`, `HIGH`, or `MIXED` based on distinct reporter volume, agreement percentage, and queue time ranges (`P3-09`).
+  - Provenance labels: Identifies contributing roles and outputs canonical source badges (`P3-09`).
+- **HTTP Handlers & Routing (`apps/api/src/handlers/reports.ts`):**
+  - `submitReportHandler`: Protected endpoint (`POST /shops/{shopId}/reports`). Enforces fail-closed authentication: missing Cognito claims or `claims.sub` immediately return HTTP 401 `UNAUTHORIZED` (`P3-11`). Extracts role from `cognito:groups`.
+  - `getShopStatusHandler`: Public endpoint (`GET /shops/{shopId}/status`). Returns real-time status summary or `'UNKNOWN'` when no valid reports exist (`P3-12`).
+  - Unified `handler`: Method and subpath router for HTTP API Gateway.
+- **Infrastructure as Code (AWS SAM) (`infrastructure/sam/template.yaml`):**
+  - Added `ReportsFunction` routing `GET /shops/{shopId}/status` and `POST /shops/{shopId}/reports`.
+  - Attached least-privilege IAM policies: `DynamoDBReadPolicy` on `ShopsTable`, `DynamoDBReadPolicy` on `ReportsTable`, and `DynamoDBWritePolicy` on `ReportsTable`.
+
+---
+
+### 1.2 Prior Architecture Preserved (Phases 1 & 2)
+
+- **Frontend (`apps/web`):**
   - React 18, Vite 6, TypeScript 5.7, Tailwind CSS 3.
-  - Application shell: Header, Navigation, Footer, Responsive States (LoadingState, EmptyState, ErrorState).
-  - Environment Configuration (`apps/web/vite.config.ts` & `.env.example`):
-    - Vite configures `envDir` to the repository root so copying `.env.example` to root `.env` automatically feeds frontend builds and dev server.
-    - `envPrefix` is locked to `VITE_` so non-`VITE_` backend/AWS variables are never exposed to browser code.
-    - `.env.example` sets `VITE_API_URL=` blank by default for local synthetic demo mode.
-  - Shop Directory: Locality filtering, search by name/landmark, result count, and shop list (`ShopList`, `ShopFilter`, `ShopCard`) displaying fictional demonstration records flagged as demo data.
-  - Shop Detail: Individual shop view (`ShopDetail`) with locality, landmark, verified hours indication (_"Verified operating hours not yet provided"_ when unverified), last updated timestamp, and Phase 3 roadmap status notice.
-  - API Client & Error Handling (`apps/web/src/features/shops/api.ts`):
-    - Reads the single environment variable `VITE_API_URL`.
-    - Uses local synthetic demonstration fixtures **only** when `VITE_API_URL` is blank/unconfigured.
-    - When `VITE_API_URL` is configured, surfaces HTTP errors, network failures, and malformed response envelopes directly to `ErrorState` (with retry support) rather than falling back silently, while mapping HTTP `404` on shop detail to `null` for the not-found view.
-  - Prominent Demonstration Data transparency: Amber `DEMO DATA` badges and contextual warning banners across all synthetic records, never claiming fictional records are verified or official.
-- **Backend:**
-  - Node.js 22 AWS Lambda target with TypeScript 5.7.
-  - Handlers:
-    - `health`: `GET /health` service health check.
-    - `shops`: `GET /shops` (with optional `locality` query filter) and `GET /shops/{shopId}`.
-  - Repositories:
-    - `ShopRepository`: `getShopById`, `listShops(locality?)`, and `saveShop` with `@aws-sdk/lib-dynamodb`.
-    - `ReportRepository`: `createReport` and `getReportsByShopId(shopId, limit?)` in descending sort key order (`REPORT#<createdAt>#<reportId>`).
-  - Validation: Request parameter validation (`validateShopId` accepting 1–64 alphanumeric, hyphen, and underscore characters; `validateLocality`) and standard response envelopes (`ApiResponse<T>` with `{ success: true, data }` or `{ success: false, error: { code, message, details } }`).
-- **Data & Seed Layer:**
-  - DynamoDB key schemas defined:
-    - `Shops` table: PK `shopId` (String).
-    - `Reports` table: PK `shopId` (String), SK `reportKey` (String: `REPORT#<createdAt>#<reportId>`), TTL attribute `expiresAt`.
-  - Seed script (`scripts/seed-demo-data.ts`):
-    - Generates 5 fictional synthetic shops in `Demo Locality A` and 15 synthetic initial reports (`QUEUE`, `EPOS`, `STOCK`), all marked `isDemoData: true`.
-    - Uses execution-time UTC ISO-8601 `createdAt` timestamps by default, or an explicit validated `--timestamp=<ISO-8601-UTC>` override for deterministic retries.
-    - Calculates roadmap-mandated TTL windows (`expiresAt` in Unix epoch seconds: 2h for `QUEUE`, 4h for `EPOS`, 24h for `STOCK`) with matching `reportKey` values.
-    - Defaults to safe **dry-run** mode (`npx tsx scripts/seed-demo-data.ts`) with zero AWS network calls or database writes.
-    - Explicit `--execute` mode validates `SHOPS_TABLE`, `REPORTS_TABLE`, and `AWS_REGION`, prints the exact timestamp before writes, and persists all 20 records via DynamoDB `PutCommand` (`ShopRepository` and `ReportRepository`).
-    - On partial failures, reports completed counts and prints the exact `--timestamp=<createdAt>` flag so an operator can retry idempotently with identical `shopId` and `reportKey` values (no duplicate report rows inserted).
-- **Infrastructure as Code (AWS SAM):**
-  - SAM template (`infrastructure/sam/template.yaml`) updated with `ShopsFunction` routing `GET /shops` and `GET /shops/{shopId}` with scoped `DynamoDBReadPolicy` on `ShopsTable`.
-  - On-demand DynamoDB tables: `ShopsTable` and `ReportsTable` (with TTL on `expiresAt`).
-  - HTTP API Gateway with CORS enabled.
-  - Cognito User Pool and application client scaffolded for Phase 5.
-- **Tooling & Code Quality:**
-  - ESLint, Prettier, strict TypeScript compilation (`tsc --noEmit`), Vitest testing framework across monorepo workspaces.
+  - Shop directory with locality filtering, search, result count, and shop detail views.
+  - Prominent demonstration badges (`DEMO DATA`) and verified operating hours disclaimers.
+  - Single environment configuration `VITE_API_URL` resolving from repository root `.env` via `envDir`.
+- **Zero AWS Provisioning:**
+  - In strict compliance with Phase 0 budget and billing requirements, no cloud infrastructure was provisioned or deployed. All tests mock AWS SDK interactions.
 
 ---
 
@@ -59,3 +67,4 @@
 - Lambda Functions:
   - `HealthFunction`: Node.js 22 runtime, ARM64 architecture (`GET /health`)
   - `ShopsFunction`: Node.js 22 runtime, ARM64 architecture (`GET /shops`, `GET /shops/{shopId}`)
+  - `ReportsFunction`: Node.js 22 runtime, ARM64 architecture (`GET /shops/{shopId}/status`, `POST /shops/{shopId}/reports`)

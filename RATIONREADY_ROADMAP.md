@@ -329,20 +329,20 @@ Dates are in IST. This is a deadline-led plan. Required MVP work takes priority 
 ## Phase 3 — Reporting, freshness, and trust engine
 **26 November 2026**
 
-- [ ] `P3-01` Implement backend validation for queue reports (`waitMinutes` 0–180).
-- [ ] `P3-02` Implement backend validation for ePOS reports (`WORKING` / `NOT_WORKING`).
-- [ ] `P3-03` Implement backend validation for stock reports and configured pilot commodities.
-- [ ] `P3-04` Calculate `createdAt` and `expiresAt` on the server using the fixed 2-hour, 4-hour, and 24-hour rules.
-- [ ] `P3-05` Implement per-user duplicate/throttle protection for rapid repeated reports.
-- [ ] `P3-06` Implement the queue median calculation and five-minute rounding rule.
-- [ ] `P3-07` Implement ePOS majority/tie handling.
-- [ ] `P3-08` Implement per-commodity stock majority/tie handling.
-- [ ] `P3-09` Implement independent-reporter counting and LOW/MEDIUM/HIGH/MIXED confidence labels.
-- [ ] `P3-10` Ensure expired reports are excluded by backend logic even before DynamoDB TTL removes them.
-- [ ] `P3-11` Create the protected `POST /shops/{shopId}/reports` API endpoint.
-- [ ] `P3-12` Create the public `GET /shops/{shopId}/status` API endpoint for aggregated current information.
-- [ ] `P3-13` Add unit tests for expiry boundaries, medians, ties, multiple commodities, duplicate reporters, and confidence labels.
-- [ ] `P3-14` Document the API request/response contract in `docs/api-contract.md`.
+- [x] `P3-01` Implement backend validation for queue reports (`waitMinutes` 0–180).
+- [x] `P3-02` Implement backend validation for ePOS reports (`WORKING` / `NOT_WORKING`).
+- [x] `P3-03` Implement backend validation for stock reports and configured pilot commodities.
+- [x] `P3-04` Calculate `createdAt` and `expiresAt` on the server using the fixed 2-hour, 4-hour, and 24-hour rules.
+- [x] `P3-05` Implement per-user duplicate/throttle protection for rapid repeated reports.
+- [x] `P3-06` Implement the queue median calculation and five-minute rounding rule.
+- [x] `P3-07` Implement ePOS majority/tie handling.
+- [x] `P3-08` Implement per-commodity stock majority/tie handling.
+- [x] `P3-09` Implement independent-reporter counting and LOW/MEDIUM/HIGH/MIXED confidence labels.
+- [x] `P3-10` Ensure expired reports are excluded by backend logic even before DynamoDB TTL removes them.
+- [x] `P3-11` Create the protected `POST /shops/{shopId}/reports` API endpoint.
+- [x] `P3-12` Create the public `GET /shops/{shopId}/status` API endpoint for aggregated current information.
+- [x] `P3-13` Add unit tests for expiry boundaries, medians, ties, multiple commodities, duplicate reporters, and confidence labels.
+- [x] `P3-14` Document the API request/response contract in `docs/api-contract.md`.
 - [ ] `P3-15` Commit and create Git tag `v0.3-reporting-engine` after tests pass.
 
 **Phase 3 exit criteria:** Queue, ePOS, and stock reports can be submitted and aggregated. Stale information is not displayed as current. Every displayed status includes freshness and reporter-count information.

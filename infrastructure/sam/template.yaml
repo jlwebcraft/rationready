@@ -174,6 +174,33 @@ Resources:
             Path: /shops/{shopId}
             Method: GET
 
+  ReportsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/reports.handler
+      CodeUri: ../../apps/api/dist/
+      Description: Community and shop manager status reporting endpoints
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ShopsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref ReportsTable
+        - DynamoDBWritePolicy:
+            TableName: !Ref ReportsTable
+      Events:
+        GetShopStatus:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /shops/{shopId}/status
+            Method: GET
+        SubmitReport:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /shops/{shopId}/reports
+            Method: POST
+
 Outputs:
   ApiEndpoint:
     Description: HTTP API Gateway Endpoint URL

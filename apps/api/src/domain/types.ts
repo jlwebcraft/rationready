@@ -1,10 +1,10 @@
 /**
  * RationReady Domain Types & Enums
- * Source of Truth: RATIONREADY_ROADMAP.md Section 2 & Phase 2 Specifications
+ * Source of Truth: RATIONREADY_ROADMAP.md Sections 1 & 2, Phase 2 & Phase 3 Specifications
  */
 
 // ============================================================================
-// 1. ROLES & REPORT ENUMS
+// 1. ROLES, COMMODITIES & REPORT ENUMS
 // ============================================================================
 
 export enum UserRole {
@@ -43,14 +43,53 @@ export enum ApiErrorCode {
   SHOP_NOT_FOUND = 'SHOP_NOT_FOUND',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
   METHOD_NOT_ALLOWED = 'METHOD_NOT_ALLOWED',
+  UNAUTHORIZED = 'UNAUTHORIZED',
+  FORBIDDEN = 'FORBIDDEN',
+  COOLDOWN_ACTIVE = 'COOLDOWN_ACTIVE',
 }
 
 // ============================================================================
-// 2. REPORT PAYLOADS
+// 2. CENTRAL CONSTANTS & PILOT CONFIGURATION
+// ============================================================================
+
+/**
+ * Approved commodities for the pilot.
+ * The pilot supports exactly RICE. All other commodities must be rejected.
+ */
+export const ALLOWED_COMMODITY_CODES = ['RICE'] as const;
+export type AllowedCommodityCode = (typeof ALLOWED_COMMODITY_CODES)[number];
+
+/**
+ * Fixed report validity windows in seconds.
+ * QUEUE: 2 hours (7,200s)
+ * EPOS: 4 hours (14,400s)
+ * STOCK: 24 hours (86,400s)
+ */
+export const REPORT_EXPIRY_SECONDS = {
+  [ReportType.QUEUE]: 2 * 60 * 60,
+  [ReportType.EPOS]: 4 * 60 * 60,
+  [ReportType.STOCK]: 24 * 60 * 60,
+} as const;
+
+/**
+ * Cooldown duration in seconds for duplicate reports by the same user.
+ */
+export const REPORT_COOLDOWN_SECONDS = 60;
+
+/**
+ * Canonical source labels for trust and provenance display.
+ */
+export const REPORT_SOURCE_LABELS = {
+  COMMUNITY: 'Community report',
+  SHOP_MANAGER: 'Shop manager update',
+} as const;
+
+// ============================================================================
+// 3. REPORT PAYLOADS & SUBMISSION INPUTS
 // ============================================================================
 
 export interface QueuePayload {
-  waitMinutes: number; // 0 to 180
+  waitMinutes: number; // 0 to 180 integer
 }
 
 export interface EposPayload {
@@ -58,14 +97,19 @@ export interface EposPayload {
 }
 
 export interface StockPayload {
-  commodityCode: string;
+  commodityCode: AllowedCommodityCode;
   availability: CommodityAvailability;
 }
 
 export type ReportPayload = QueuePayload | EposPayload | StockPayload;
 
+export interface SubmitReportInput {
+  reportType: ReportType;
+  payload: ReportPayload;
+}
+
 // ============================================================================
-// 3. DYNAMODB ENTITIES & KEY SCHEMAS
+// 4. DYNAMODB ENTITIES & KEY SCHEMAS
 // ============================================================================
 
 /**
@@ -114,7 +158,47 @@ export function createReportKey(createdAt: string, reportId: string): string {
 }
 
 // ============================================================================
-// 4. API CONTRACT & RESPONSE ENVELOPES
+// 5. STATUS SUMMARY & AGGREGATION RESPONSES (Phase 3)
+// ============================================================================
+
+export interface QueueStatusSummary {
+  waitMinutes: number | 'UNKNOWN';
+  latestReportAt: string | null;
+  ageSeconds: number | null;
+  distinctReporterCount: number;
+  confidence: ConfidenceLevel;
+  sources: string[];
+}
+
+export interface EposStatusSummary {
+  status: EposStatus | 'MIXED REPORTS' | 'UNKNOWN';
+  latestReportAt: string | null;
+  ageSeconds: number | null;
+  distinctReporterCount: number;
+  confidence: ConfidenceLevel;
+  sources: string[];
+}
+
+export interface CommodityStockStatusSummary {
+  commodityCode: AllowedCommodityCode;
+  availability: CommodityAvailability | 'MIXED REPORTS' | 'UNKNOWN';
+  latestReportAt: string | null;
+  ageSeconds: number | null;
+  distinctReporterCount: number;
+  confidence: ConfidenceLevel;
+  sources: string[];
+}
+
+export interface ShopStatusResponse {
+  shopId: string;
+  generatedAt: string;
+  queue: QueueStatusSummary;
+  epos: EposStatusSummary;
+  stock: CommodityStockStatusSummary[];
+}
+
+// ============================================================================
+// 6. API CONTRACT & RESPONSE ENVELOPES
 // ============================================================================
 
 export interface ApiResponseSuccess<T> {
